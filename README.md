@@ -1,1 +1,1 @@
-# quickqr
+# QuickQR

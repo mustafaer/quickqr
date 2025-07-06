@@ -1,3 +1,46 @@
-<ion-app>
-  <ion-router-outlet></ion-router-outlet>
-</ion-app>
+<ion-header [translucent]="true">
+    <ion-toolbar>
+        <ion-title style="display: flex; align-items: center; gap: 8px;">
+            <img src="assets/icon.png" alt="App Icon" style="width: 32px; height: 32px; vertical-align: middle; border-radius: 8px;" />
+            QR Code Reader
+        </ion-title>
+    </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+    <ion-header collapse="condense">
+        <ion-toolbar>
+            <ion-title size="large">QR Code Reader</ion-title>
+        </ion-toolbar>
+    </ion-header>
+
+    <zxing-scanner
+            (scanSuccess)="onCodeResult($event)"
+            [formats]="qrCodeFormat"
+            [torch]="true"
+            [tryHarder]="true">
+    </zxing-scanner>
+    @if (scannedResult){
+        <div style="margin-top: 20px;">
+            <ion-card>
+                <ion-card-header>Scanned Result</ion-card-header>
+                <ion-card-content style="display: flex; align-items: center; gap: 8px;">
+                    @if (scannedResult.startsWith('http')) {
+                        <a [href]="scannedResult" target="_blank" style="display: flex; align-items: center; gap: 4px;">
+                            <ion-icon name="open-outline"></ion-icon>
+                            {{ scannedResult }}
+                        </a>
+                        <ion-button fill="clear" size="small" (click)="copyToClipboard(scannedResult)">
+                            <ion-icon slot="icon-only" name="copy-outline"></ion-icon>
+                        </ion-button>
+                    } @else {
+                        <span>{{ scannedResult }}</span>
+                        <ion-button fill="clear" size="small" (click)="copyToClipboard(scannedResult)">
+                            <ion-icon slot="icon-only" name="copy-outline"></ion-icon>
+                        </ion-button>
+                    }
+                </ion-card-content>
+            </ion-card>
+        </div>
+    }
+</ion-content>
