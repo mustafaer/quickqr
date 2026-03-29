@@ -141,3 +141,19 @@ vite.config.ts.timestamp-*
 .idea
 .angular
 .idea/*
+
+# Build output
+www
+./www/*
+
+# Local dev scripts
+scripts/
+
+# macOS
+.DS_Store
+
+# Release signing
+android/keystore.properties
+android/app/quickqr.jks
+*.jks
+*.keystore

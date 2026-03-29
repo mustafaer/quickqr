@@ -1,24 +1,27 @@
 {
   "name": "quickqr",
-  "version": "0.0.1",
-  "email": "mustafaerpro@gmail.com",
-  "author": "Mustafa ER",
+  "version": "1.1.0",
+  "author": "Mustafa ER <mustafaerpro@gmail.com>",
   "license": "MIT",
-  "homepage": "https://mustafaer.net/",
-  "description": "An QR code scanner app.",
+  "homepage": "https://github.com/nicemustafa/quickqr#readme",
+  "description": "Fast, private, and ad-free QR code scanner for Android.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicemustafa/quickqr.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nicemustafa/quickqr/issues"
+  },
   "keywords": [
-    "angular",
-    "public",
-    "ionic",
-    "qrcode",
-    "scanner",
     "qr-code",
-    "qr-code-scanner",
+    "qr-scanner",
+    "barcode",
+    "angular",
+    "ionic",
     "capacitor",
-    "capacitor-qr-code-scanner",
-    "capacitor-qr-code",
-    "capacitor-qr-code-scanner",
-    "android"
+    "android",
+    "zxing",
+    "camera"
   ],
   "funding": [
     {
@@ -51,6 +54,7 @@
     "@capacitor/android": "7.4.1",
     "@capacitor/app": "7.0.1",
     "@capacitor/assets": "^3.0.5",
+    "@capacitor/browser": "^7.0.5",
     "@capacitor/core": "7.4.1",
     "@capacitor/haptics": "7.0.1",
     "@capacitor/keyboard": "7.0.1",

@@ -4,14 +4,28 @@ const config: CapacitorConfig = {
     appId: 'net.mustafaer.quickqr',
     appName: 'QuickQR',
     webDir: 'www',
+    android: {
+        backgroundColor: '#6C5CE7',
+    },
     plugins: {
         SplashScreen: {
-            launchShowDuration: 3000,
-            backgroundColor: "#ffffff",
+            launchShowDuration: 2000,
+            backgroundColor: "#6C5CE7",
             androidSplashResourceName: "splash",
             androidScaleType: "CENTER_CROP",
-            showSpinner: false
-        }
+            showSpinner: false,
+            splashFullScreen: true,
+            splashImmersive: true,
+        },
+        StatusBar: {
+            overlaysWebView: false,
+            style: 'DARK',
+            backgroundColor: '#6C5CE7',
+        },
+        Keyboard: {
+            resize: 'body',
+            resizeOnFullScreen: true,
+        },
     }
 };
 

@@ -1,2 +1,55 @@
 // For information on how to create your own theme, please see:
 // http://ionicframework.com/docs/theming/
+
+:root {
+  --ion-color-primary: #6C5CE7;
+  --ion-color-primary-rgb: 108, 92, 231;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #5f51cb;
+  --ion-color-primary-tint: #7b6ce9;
+
+  --ion-color-secondary: #00CECE;
+  --ion-color-secondary-rgb: 0, 206, 206;
+  --ion-color-secondary-contrast: #000000;
+  --ion-color-secondary-contrast-rgb: 0, 0, 0;
+  --ion-color-secondary-shade: #00b5b5;
+  --ion-color-secondary-tint: #1ad3d3;
+
+  --ion-color-success: #00B894;
+  --ion-color-success-rgb: 0, 184, 148;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #00a282;
+  --ion-color-success-tint: #1abf9f;
+
+  --ion-color-warning: #FDCB6E;
+  --ion-color-warning-rgb: 253, 203, 110;
+  --ion-color-warning-contrast: #000000;
+  --ion-color-warning-contrast-rgb: 0, 0, 0;
+  --ion-color-warning-shade: #dfb361;
+  --ion-color-warning-tint: #fdd07d;
+
+  --ion-color-danger: #FF7675;
+  --ion-color-danger-rgb: 255, 118, 117;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #e06867;
+  --ion-color-danger-tint: #ff8483;
+
+  --ion-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-color-primary: #a29bfe;
+    --ion-color-primary-rgb: 162, 155, 254;
+    --ion-color-primary-shade: #8e88e0;
+    --ion-color-primary-tint: #aba5fe;
+
+    --ion-color-secondary: #55efc4;
+    --ion-color-secondary-rgb: 85, 239, 196;
+    --ion-color-secondary-shade: #4bd2ac;
+    --ion-color-secondary-tint: #66f1ca;
+  }
+}

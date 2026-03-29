@@ -1,46 +1,132 @@
-<ion-header [translucent]="true">
-    <ion-toolbar>
-        <ion-title style="display: flex; align-items: center; gap: 8px;">
-            <img src="assets/icon.png" alt="App Icon" style="width: 32px; height: 32px; vertical-align: middle; border-radius: 8px;" />
-            QR Code Reader
+<ion-header class="app-header" [translucent]="true">
+    <ion-toolbar color="primary">
+        <ion-title>
+            <div class="header-title-container">
+                <img src="assets/icon.png" alt="QuickQR" class="header-icon"/>
+                QuickQR
+            </div>
         </ion-title>
+        @if (availableCameras.length > 1) {
+            <ion-button slot="end" fill="clear" color="light" (click)="switchCamera()">
+                <ion-icon slot="icon-only" name="camera-reverse-outline"></ion-icon>
+            </ion-button>
+        }
+        <ion-button slot="end" fill="clear" color="light" (click)="toggleTorch()">
+            <ion-icon slot="icon-only" [name]="torchEnabled ? 'flash' : 'flash-outline'"></ion-icon>
+        </ion-button>
+        @if (scannedResult) {
+            <ion-button slot="end" fill="clear" color="light" (click)="clearResult()">
+                <ion-icon slot="icon-only" name="scan-outline"></ion-icon>
+            </ion-button>
+        }
     </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-    <ion-header collapse="condense">
-        <ion-toolbar>
-            <ion-title size="large">QR Code Reader</ion-title>
-        </ion-toolbar>
-    </ion-header>
 
-    <zxing-scanner
+    <!-- Permission Denied -->
+    @if (cameraPermissionDenied) {
+        <div class="error-state">
+            <ion-icon name="lock-closed-outline"></ion-icon>
+            <h3>Camera Permission Required</h3>
+            <p>Please allow camera access to scan QR codes.</p>
+            <div class="error-actions">
+                <ion-button fill="solid" color="primary" (click)="retryPermission()">
+                    <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                    Try Again
+                </ion-button>
+            </div>
+        </div>
+    }
+
+    <!-- Scanner -->
+    <div class="scanner-wrapper" [class.scanner-paused]="scannerPaused">
+        <zxing-scanner
+            [enable]="scannerEnabled"
+            [torch]="torchEnabled"
+            [formats]="scanFormats"
+            [tryHarder]="true"
+            [delayBetweenScanSuccess]="1500"
             (scanSuccess)="onCodeResult($event)"
-            [formats]="qrCodeFormat"
-            [torch]="true"
-            [tryHarder]="true">
-    </zxing-scanner>
-    @if (scannedResult){
-        <div style="margin-top: 20px;">
+            (camerasFound)="onCamerasFound($event)"
+            (permissionResponse)="onPermissionResponse($event)">
+        </zxing-scanner>
+        @if (scannerPaused) {
+            <div class="scanner-paused-overlay">
+                <ion-icon name="checkmark-circle" color="success"></ion-icon>
+            </div>
+        }
+    </div>
+
+    <!-- Result Card -->
+    @if (scannedResult) {
+        <div class="result-card">
             <ion-card>
-                <ion-card-header>Scanned Result</ion-card-header>
-                <ion-card-content style="display: flex; align-items: center; gap: 8px;">
-                    @if (scannedResult.startsWith('http')) {
-                        <a [href]="scannedResult" target="_blank" style="display: flex; align-items: center; gap: 4px;">
-                            <ion-icon name="open-outline"></ion-icon>
-                            {{ scannedResult }}
-                        </a>
-                        <ion-button fill="clear" size="small" (click)="copyToClipboard(scannedResult)">
-                            <ion-icon slot="icon-only" name="copy-outline"></ion-icon>
+                <ion-card-header>
+                    <ion-card-subtitle>{{ latestScanTime | date:'HH:mm:ss' }}</ion-card-subtitle>
+                    <ion-card-title style="font-size: 18px;">Scan Result</ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                    <ion-chip [color]="getTypeColor(resultType)" class="type-chip">
+                        <ion-icon [name]="getTypeIcon(resultType)" style="margin-right: 4px; font-size: 14px;"></ion-icon>
+                        {{ getTypeLabel(resultType) }}
+                    </ion-chip>
+                    <p class="result-text" style="margin-top: 10px;">{{ scannedResult }}</p>
+                    <div class="result-actions">
+                        <ion-button size="small" fill="outline" color="primary" (click)="copyToClipboard(scannedResult)">
+                            <ion-icon slot="start" name="copy-outline"></ion-icon>
+                            Copy
                         </ion-button>
-                    } @else {
-                        <span>{{ scannedResult }}</span>
-                        <ion-button fill="clear" size="small" (click)="copyToClipboard(scannedResult)">
-                            <ion-icon slot="icon-only" name="copy-outline"></ion-icon>
-                        </ion-button>
-                    }
+                        @if (resultIsUrl) {
+                            <ion-button size="small" fill="solid" color="primary" (click)="openUrl(scannedResult)">
+                                <ion-icon slot="start" name="open-outline"></ion-icon>
+                                Open
+                            </ion-button>
+                        }
+                        @if (isActionable(resultType) && !resultIsUrl) {
+                            <ion-button size="small" fill="solid" color="primary" (click)="openActionable(scannedResult, resultType)">
+                                <ion-icon slot="start" [name]="getTypeIcon(resultType)"></ion-icon>
+                                Open
+                            </ion-button>
+                        }
+                    </div>
                 </ion-card-content>
             </ion-card>
+        </div>
+    }
+
+    <!-- Empty State -->
+    @if (!scannedResult && scanHistory.length === 0 && !cameraPermissionDenied) {
+        <div class="empty-state">
+            <ion-icon name="qr-code-outline"></ion-icon>
+            <h3>Scan a QR Code</h3>
+            <p>Position the QR code inside the frame to scan</p>
+        </div>
+    }
+
+    <!-- Scan History -->
+    @if (scanHistory.length > 0) {
+        <div class="history-section">
+            <div class="history-header">
+                <h3>Recent Scans</h3>
+                <ion-button fill="clear" size="small" color="danger" (click)="clearHistory()">
+                    Clear
+                </ion-button>
+            </div>
+            <ion-list lines="none">
+                @for (item of scanHistory; track item.id) {
+                    <ion-item [button]="true" (click)="selectFromHistory(item)">
+                        <ion-icon [name]="getTypeIcon(item.type)" slot="start" color="primary" style="font-size: 20px;"></ion-icon>
+                        <ion-label>
+                            <h2 style="font-size: 14px; font-weight: 500;">{{ item.text.length > 50 ? item.text.substring(0, 50) + '…' : item.text }}</h2>
+                            <p style="font-size: 12px;">{{ item.date | date:'d MMM, HH:mm' }}</p>
+                        </ion-label>
+                        <ion-note slot="end">
+                            <ion-icon name="chevron-forward-outline" style="font-size: 16px; color: var(--ion-color-medium);"></ion-icon>
+                        </ion-note>
+                    </ion-item>
+                }
+            </ion-list>
         </div>
     }
 </ion-content>
