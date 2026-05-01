@@ -1,5 +1,6 @@
-import {Component, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, OnDestroy} from '@angular/core';
+import {Component, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, OnInit, ElementRef} from '@angular/core';
 import {DatePipe} from '@angular/common';
+import {FormsModule} from '@angular/forms';
 import {
     IonButton,
     IonCard,
@@ -12,11 +13,17 @@ import {
     IonHeader,
     IonIcon,
     IonItem,
+    IonItemOption,
+    IonItemOptions,
+    IonItemSliding,
     IonLabel,
     IonList,
     IonNote,
+    IonSearchbar,
     IonTitle,
+    IonToggle,
     IonToolbar,
+    AlertController,
     ToastController,
 } from '@ionic/angular/standalone';
 import {ZXingScannerModule, ZXingScannerComponent} from "@zxing/ngx-scanner";
@@ -25,135 +32,277 @@ import {Haptics, ImpactStyle} from '@capacitor/haptics';
 import {Browser} from '@capacitor/browser';
 import {addIcons} from 'ionicons';
 import {
+    calendarOutline,
     cameraReverseOutline,
+    chatbubbleOutline,
     checkmarkCircle,
     checkmarkCircleOutline,
     chevronForwardOutline,
     closeCircleOutline,
+    closeOutline,
     copyOutline,
+    createOutline,
+    downloadOutline,
+    eyeOffOutline,
+    eyeOutline,
     flash,
     flashOutline,
+    imageOutline,
+    keyOutline,
     linkOutline,
     lockClosedOutline,
     locationOutline,
     mailOutline,
     callOutline,
     openOutline,
+    personOutline,
     qrCodeOutline,
     refreshOutline,
     scanOutline,
+    settingsOutline,
+    shareOutline,
     textOutline,
+    trashOutline,
     wifiOutline,
+    repeatOutline,
+    rocketOutline,
+    shieldCheckmarkOutline,
+    colorWandOutline,
 } from 'ionicons/icons';
+import QRCode from 'qrcode';
 
-// ── Types ──
-interface ScanHistoryItem {
-    id: string;
-    text: string;
-    date: Date;
-    type: ScanResultType;
-}
+import {ScanResultType, WifiData, DEBOUNCE_MS, RESULT_TRUNCATE_LENGTH} from './models/scan.model';
+import {TypeDetectorService} from './services/type-detector.service';
+import {HistoryService} from './services/history.service';
+import {SettingsService} from './services/settings.service';
+import {I18nService} from './services/i18n.service';
 
-type ScanResultType = 'url' | 'wifi' | 'email' | 'phone' | 'geo' | 'text';
-
-const MAX_HISTORY = 20;
-const HISTORY_KEY = 'quickqr_scan_history';
-const DEBOUNCE_MS = 1500;
-const PAUSE_MS = 2000;
+type AppView = 'scanner' | 'generator' | 'settings' | 'onboarding';
 
 @Component({
     selector: 'app-root',
     templateUrl: 'app.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        DatePipe,
+        DatePipe, FormsModule,
         IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle,
         IonChip, IonContent, IonHeader, IonTitle, IonToolbar,
         IonIcon, IonButton, IonList, IonItem, IonLabel, IonNote,
+        IonItemSliding, IonItemOptions, IonItemOption,
+        IonSearchbar, IonToggle,
         ZXingScannerModule,
     ],
 })
-export class AppComponent implements OnDestroy {
+export class AppComponent implements OnInit {
     @ViewChild(ZXingScannerComponent) scanner!: ZXingScannerComponent;
+    @ViewChild('qrCanvas') qrCanvas!: ElementRef<HTMLCanvasElement>;
 
-    // Scanner
-    scannerEnabled = true;
+    // ── Template-accessible constants ─────────────────────
+    readonly truncateLength = RESULT_TRUNCATE_LENGTH;
+
+    // ── View state ────────────────────────────────────────
+    currentView: AppView = 'scanner';
+    onboardingSlide = 0;
+
+    // ── Scanner state ─────────────────────────────────────
+    scannerEnabled = false;
     torchEnabled = false;
     scannerPaused = false;
     scannedResult: string | null = null;
     latestScanTime: Date | null = null;
 
-    // Cached result type
+    // ── Cached result data ────────────────────────────────
     resultType: ScanResultType = 'text';
-    resultIsUrl = false;
+    wifiData: WifiData | null = null;
+    vcardName: string | null = null;
+    eventSummary: string | null = null;
+    showWifiPassword = false;
 
-    // Permission — no blocking state on startup
+    // ── Permission & camera ───────────────────────────────
     cameraPermissionDenied = false;
+    insecureContext = false;
     hasCamera = true;
+    availableCameras: MediaDeviceInfo[] = [];
+    private activeCameraIndex = 0;
+    private cameraReady = false;
 
-    // Formats
+    // ── History search ────────────────────────────────────
+    historySearchQuery = '';
+
+    // ── QR Generator ──────────────────────────────────────
+    generatorText = '';
+    generatorQrDataUrl: string | null = null;
+
+    // ── Formats ───────────────────────────────────────────
     readonly scanFormats = [
         BarcodeFormat.QR_CODE,
         BarcodeFormat.DATA_MATRIX,
         BarcodeFormat.AZTEC,
     ];
 
-    // Camera
-    availableCameras: MediaDeviceInfo[] = [];
-    private activeCameraIndex = 0;
-
-    // History
-    scanHistory: ScanHistoryItem[] = [];
-
-    // Internal
+    // ── Internal ──────────────────────────────────────────
     private lastScanTime = 0;
-    private resumeTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor(
+        readonly typeDetector: TypeDetectorService,
+        readonly history: HistoryService,
+        readonly settings: SettingsService,
+        readonly i18n: I18nService,
         private toastController: ToastController,
+        private alertController: AlertController,
         private cdr: ChangeDetectorRef,
     ) {
         addIcons({
+            calendarOutline,
             cameraReverseOutline,
+            chatbubbleOutline,
             checkmarkCircle,
             checkmarkCircleOutline,
             chevronForwardOutline,
             closeCircleOutline,
+            closeOutline,
             copyOutline,
+            createOutline,
+            downloadOutline,
+            eyeOffOutline,
+            eyeOutline,
             flash,
             flashOutline,
+            imageOutline,
+            keyOutline,
             linkOutline,
             lockClosedOutline,
             locationOutline,
             mailOutline,
             callOutline,
             openOutline,
+            personOutline,
             qrCodeOutline,
             refreshOutline,
             scanOutline,
+            settingsOutline,
+            shareOutline,
             textOutline,
+            trashOutline,
             wifiOutline,
+            repeatOutline,
+            rocketOutline,
+            shieldCheckmarkOutline,
+            colorWandOutline,
         });
-        this.loadHistory();
     }
 
-    ngOnDestroy() {
-        if (this.resumeTimer) clearTimeout(this.resumeTimer);
+    ngOnInit() {
+        // Show onboarding on first launch
+        if (!this.settings.onboardingComplete) {
+            this.currentView = 'onboarding';
+        }
+        this.waitForCameraPermission();
+    }
+
+    // ── Camera permission (native bridge) ─────────────────
+
+    private waitForCameraPermission() {
+        const win = window as any;
+
+        if (win.nativeCameraGranted === true) {
+            this.enableScanner();
+            return;
+        }
+
+        if (win.nativeCameraGranted === false) {
+            this.cameraPermissionDenied = true;
+            this.cdr.markForCheck();
+            return;
+        }
+
+        window.addEventListener('nativeCameraPermission', ((event: CustomEvent) => {
+            if (event.detail?.granted) {
+                this.enableScanner();
+            } else {
+                this.cameraPermissionDenied = true;
+                this.cdr.markForCheck();
+            }
+        }) as EventListener, {once: true});
+
+        setTimeout(() => {
+            if (!this.scannerEnabled && !this.cameraPermissionDenied) {
+                this.webFallbackCheck();
+            }
+        }, 5000);
+    }
+
+    private enableScanner() {
+        this.cameraPermissionDenied = false;
+        this.scannerEnabled = true;
+        this.cdr.markForCheck();
+    }
+
+    private async webFallbackCheck() {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            this.insecureContext = true;
+            this.cameraPermissionDenied = true;
+            this.cdr.markForCheck();
+            return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({video: true});
+            stream.getTracks().forEach(t => t.stop());
+            this.enableScanner();
+        } catch {
+            this.cameraPermissionDenied = true;
+            this.cdr.markForCheck();
+        }
+    }
+
+    // ── View navigation ───────────────────────────────────
+
+    openGenerator() {
+        this.currentView = 'generator';
+        this.generatorText = '';
+        this.generatorQrDataUrl = null;
+        this.cdr.markForCheck();
+    }
+
+    openSettings() {
+        this.currentView = 'settings';
+        this.cdr.markForCheck();
+    }
+
+    closeOverlay() {
+        this.currentView = 'scanner';
+        this.cdr.markForCheck();
+    }
+
+    // ── Onboarding ────────────────────────────────────────
+
+    nextOnboardingSlide() {
+        if (this.onboardingSlide < 2) {
+            this.onboardingSlide++;
+        } else {
+            this.completeOnboarding();
+        }
+        this.cdr.markForCheck();
+    }
+
+    completeOnboarding() {
+        this.settings.completeOnboarding();
+        this.currentView = 'scanner';
+        this.cdr.markForCheck();
     }
 
     // ── zxing-scanner events ──────────────────────────────
 
-    /** Fires once when cameras are enumerated (permission was granted). */
     onCamerasFound(cameras: MediaDeviceInfo[]) {
         this.availableCameras = cameras;
         this.hasCamera = cameras.length > 0;
+        this.cameraReady = cameras.length > 0;
         this.cameraPermissionDenied = false;
 
         if (cameras.length > 0) {
             const backIdx = cameras.findIndex(c => /back|rear|environment/i.test(c.label));
             this.activeCameraIndex = backIdx >= 0 ? backIdx : 0;
 
-            // Programmatically select back camera
             if (this.scanner) {
                 this.scanner.device = cameras[this.activeCameraIndex];
             }
@@ -161,36 +310,17 @@ export class AppComponent implements OnDestroy {
         this.cdr.markForCheck();
     }
 
-    /** Fires when user grants/denies camera via the native OS dialog. */
     onPermissionResponse(granted: boolean) {
-        if (!granted) {
-            this.cameraPermissionDenied = true;
-            this.scannerEnabled = false;
-        } else {
+        if (granted) {
             this.cameraPermissionDenied = false;
+            this.cdr.markForCheck();
         }
-        this.cdr.markForCheck();
     }
 
-    /** User taps "Try Again" after denying. */
-    async retryPermission() {
+    retryPermission() {
         this.cameraPermissionDenied = false;
         this.scannerEnabled = true;
         this.cdr.markForCheck();
-
-        // Force a fresh getUserMedia to re-trigger the OS prompt
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({video: true});
-            stream.getTracks().forEach(t => t.stop());
-            // Give 300ms for the camera to release before scanner picks it up
-            await new Promise(r => setTimeout(r, 300));
-            this.scannerEnabled = true;
-            this.cdr.markForCheck();
-        } catch {
-            this.cameraPermissionDenied = true;
-            this.scannerEnabled = false;
-            this.cdr.markForCheck();
-        }
     }
 
     switchCamera() {
@@ -217,26 +347,38 @@ export class AppComponent implements OnDestroy {
         this.lastScanTime = now;
         this.scannedResult = result;
         this.latestScanTime = new Date();
-        this.resultType = this.detectType(result);
-        this.resultIsUrl = this.resultType === 'url';
+        this.resultType = this.typeDetector.detect(result);
 
-        this.pauseScanner();
+        this.wifiData = this.resultType === 'wifi' ? this.typeDetector.parseWifi(result) : null;
+        this.vcardName = this.resultType === 'vcard' ? this.typeDetector.parseVCardName(result) : null;
+        this.eventSummary = this.resultType === 'calendar' ? this.typeDetector.parseEventSummary(result) : null;
+        this.showWifiPassword = false;
 
-        // History
-        if (!this.scanHistory.length || this.scanHistory[0].text !== result) {
-            this.scanHistory.unshift({
-                id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                text: result,
-                date: new Date(),
-                type: this.resultType,
-            });
-            if (this.scanHistory.length > MAX_HISTORY) this.scanHistory.length = MAX_HISTORY;
-            this.saveHistory();
-        }
+        // Pause scanner
+        this.scannerEnabled = false;
+        this.scannerPaused = true;
 
+        this.history.add(result, this.resultType);
         this.cdr.markForCheck();
 
-        try { await Haptics.impact({style: ImpactStyle.Medium}); } catch {}
+        // Haptic feedback (if enabled)
+        if (this.settings.hapticEnabled) {
+            try {
+                await Haptics.impact({style: ImpactStyle.Medium});
+            } catch {
+                // Haptics unavailable — non-critical
+            }
+        }
+
+        // Continuous/batch mode: auto-resume after 3 seconds
+        if (this.settings.continuousMode) {
+            setTimeout(() => {
+                this.scannedResult = null;
+                this.scannerPaused = false;
+                this.scannerEnabled = true;
+                this.cdr.markForCheck();
+            }, 3000);
+        }
     }
 
     // ── Actions ───────────────────────────────────────────
@@ -244,113 +386,247 @@ export class AppComponent implements OnDestroy {
     async copyToClipboard(text: string) {
         try {
             await navigator.clipboard.writeText(text);
-            await this.toast('Copied to clipboard ✓', 'success', 'checkmark-circle-outline');
-        } catch {
-            await this.toast('Failed to copy', 'danger', 'close-circle-outline');
+            await this.toast(this.i18n.t('action.copied'), 'success', 'checkmark-circle-outline');
+        } catch (err) {
+            console.warn('[Clipboard] Copy failed:', err);
+            await this.toast(this.i18n.t('action.copyFailed'), 'danger', 'close-circle-outline');
         }
     }
 
-    async openUrl(url: string) {
-        try { await Browser.open({url}); } catch { window.open(url, '_blank'); }
-    }
-
     async openActionable(text: string, type: ScanResultType) {
-        let url = text;
-        if (type === 'email' && !text.startsWith('mailto:')) url = `mailto:${text}`;
-        if (type === 'phone' && !text.startsWith('tel:')) url = `tel:${text}`;
-        try { await Browser.open({url}); } catch { window.open(url, '_blank'); }
-    }
-
-    // ── Type helpers (called once per scan, cached) ───────
-
-    detectType(text: string): ScanResultType {
-        const t = text.trim();
-        if (/^https?:\/\//i.test(t)) return 'url';
-        if (/^WIFI:/i.test(t)) return 'wifi';
-        if (/^mailto:/i.test(t) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) return 'email';
-        if (/^tel:/i.test(t) || /^\+?\d[\d\s\-()]{6,}$/.test(t)) return 'phone';
-        if (/^geo:/i.test(t)) return 'geo';
-        return 'text';
-    }
-
-    getTypeLabel(t: ScanResultType) {
-        return {url: 'URL', wifi: 'Wi-Fi', email: 'Email', phone: 'Phone', geo: 'Location', text: 'Text'}[t];
-    }
-    getTypeIcon(t: ScanResultType) {
-        return {url: 'link-outline', wifi: 'wifi-outline', email: 'mail-outline', phone: 'call-outline', geo: 'location-outline', text: 'text-outline'}[t];
-    }
-    getTypeColor(t: ScanResultType) {
-        return {url: 'secondary', wifi: 'warning', email: 'success', phone: 'primary', geo: 'danger', text: 'primary'}[t];
-    }
-    isActionable(t: ScanResultType) {
-        return t === 'url' || t === 'email' || t === 'phone' || t === 'geo';
+        const url = this.typeDetector.getActionUrl(text, type);
+        try {
+            await Browser.open({url});
+        } catch (err) {
+            console.warn('[Browser] Capacitor Browser failed:', err);
+            window.open(url, '_blank');
+        }
     }
 
     // ── Scanner control ───────────────────────────────────
 
-    clearResult() {
+    scanAgain() {
         this.scannedResult = null;
         this.latestScanTime = null;
         this.resultType = 'text';
-        this.resultIsUrl = false;
-        this.resumeScanner();
-    }
-
-    private pauseScanner() {
-        this.scannerEnabled = false;
-        this.scannerPaused = true;
-        if (this.resumeTimer) clearTimeout(this.resumeTimer);
-        this.resumeTimer = setTimeout(() => {
-            this.scannerEnabled = true;
-            this.scannerPaused = false;
-            this.cdr.markForCheck();
-        }, PAUSE_MS);
-    }
-
-    private resumeScanner() {
-        if (this.resumeTimer) clearTimeout(this.resumeTimer);
+        this.wifiData = null;
+        this.vcardName = null;
+        this.eventSummary = null;
+        this.showWifiPassword = false;
         this.scannerEnabled = true;
         this.scannerPaused = false;
         this.cdr.markForCheck();
     }
 
+    // ── Gallery scan ──────────────────────────────────────
+
+    async scanFromGallery() {
+        try {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async () => {
+                const file = input.files?.[0];
+                if (!file) return;
+                await this.decodeImageFile(file);
+            };
+            input.click();
+        } catch (err) {
+            console.warn('[Gallery] Failed to open gallery:', err);
+            await this.toast('Failed to open gallery', 'danger', 'close-circle-outline');
+        }
+    }
+
+    private async decodeImageFile(file: File) {
+        const {BrowserMultiFormatReader} = await import('@zxing/library');
+        const reader = new BrowserMultiFormatReader();
+
+        const img = document.createElement('img');
+        const url = URL.createObjectURL(file);
+        img.src = url;
+
+        await new Promise<void>((resolve) => {
+            img.onload = () => resolve();
+        });
+
+        try {
+            const result = await reader.decodeFromImageElement(img);
+            URL.revokeObjectURL(url);
+            if (result) {
+                await this.onCodeResult(result.getText());
+            }
+        } catch {
+            URL.revokeObjectURL(url);
+            await this.toast('No QR code found in image', 'warning', 'close-circle-outline');
+        }
+    }
+
     // ── History ───────────────────────────────────────────
 
-    selectFromHistory(item: ScanHistoryItem) {
+    get filteredHistory() {
+        return this.history.search(this.historySearchQuery);
+    }
+
+    selectFromHistory(item: { text: string; date: Date; type: ScanResultType }) {
         this.scannedResult = item.text;
         this.latestScanTime = item.date;
         this.resultType = item.type;
-        this.resultIsUrl = item.type === 'url';
+        this.wifiData = item.type === 'wifi' ? this.typeDetector.parseWifi(item.text) : null;
+        this.vcardName = item.type === 'vcard' ? this.typeDetector.parseVCardName(item.text) : null;
+        this.eventSummary = item.type === 'calendar' ? this.typeDetector.parseEventSummary(item.text) : null;
+        this.showWifiPassword = false;
         this.cdr.markForCheck();
     }
 
-    clearHistory() {
-        this.scanHistory = [];
-        this.saveHistory();
+    removeHistoryItem(id: string) {
+        this.history.remove(id);
         this.cdr.markForCheck();
     }
 
-    private saveHistory() {
-        try { localStorage.setItem(HISTORY_KEY, JSON.stringify(this.scanHistory)); } catch {}
+    async confirmClearHistory() {
+        const alert = await this.alertController.create({
+            header: this.i18n.t('history.clearConfirm.title'),
+            message: this.i18n.t('history.clearConfirm.message'),
+            cssClass: 'confirm-alert',
+            buttons: [
+                {text: this.i18n.t('history.clearConfirm.cancel'), role: 'cancel'},
+                {
+                    text: this.i18n.t('history.clearConfirm.confirm'),
+                    role: 'destructive',
+                    handler: () => {
+                        this.history.clear();
+                        this.cdr.markForCheck();
+                    },
+                },
+            ],
+        });
+        await alert.present();
     }
 
-    private loadHistory() {
+    // ── History export ────────────────────────────────────
+
+    async exportHistory(format: 'json' | 'csv') {
+        const data = format === 'json' ? this.history.exportJSON() : this.history.exportCSV();
+        const filename = `quickqr_history.${format}`;
+        const mimeType = format === 'json' ? 'application/json' : 'text/csv';
+
         try {
-            const raw = localStorage.getItem(HISTORY_KEY);
-            if (raw) {
-                const arr = JSON.parse(raw);
-                this.scanHistory = Array.isArray(arr) ? arr.map((i: any) => ({
-                    id: i.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                    text: i.text,
-                    date: new Date(i.date),
-                    type: i.type || this.detectType(i.text),
-                })) : [];
+            // Try native Share API first
+            const blob = new Blob([data], {type: mimeType});
+            const file = new File([blob], filename, {type: mimeType});
+
+            if (navigator.share && navigator.canShare?.({files: [file]})) {
+                await navigator.share({files: [file], title: 'QuickQR History'});
+            } else {
+                // Fallback: download
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
             }
-        } catch { this.scanHistory = []; }
+            await this.toast(this.i18n.t('history.exported'), 'success', 'checkmark-circle-outline');
+        } catch (err) {
+            console.warn('[Export] Failed:', err);
+        }
     }
+
+    async showExportOptions() {
+        const alert = await this.alertController.create({
+            header: this.i18n.t('history.export.title'),
+            buttons: [
+                {
+                    text: this.i18n.t('history.export.json'),
+                    handler: () => this.exportHistory('json'),
+                },
+                {
+                    text: this.i18n.t('history.export.csv'),
+                    handler: () => this.exportHistory('csv'),
+                },
+                {text: this.i18n.t('history.clearConfirm.cancel'), role: 'cancel'},
+            ],
+        });
+        await alert.present();
+    }
+
+    // ── QR Generator ──────────────────────────────────────
+
+    async generateQR() {
+        if (!this.generatorText.trim()) return;
+        try {
+            this.generatorQrDataUrl = await QRCode.toDataURL(this.generatorText, {
+                width: 300,
+                margin: 2,
+                color: {dark: '#000000', light: '#ffffff'},
+                errorCorrectionLevel: 'H',
+            });
+            this.cdr.markForCheck();
+        } catch (err) {
+            console.warn('[Generator] Failed to generate QR:', err);
+            await this.toast('Failed to generate QR code', 'danger', 'close-circle-outline');
+        }
+    }
+
+    async shareQR() {
+        if (!this.generatorQrDataUrl) return;
+        try {
+            // Convert data URL to blob
+            const res = await fetch(this.generatorQrDataUrl);
+            const blob = await res.blob();
+            const file = new File([blob], 'quickqr.png', {type: 'image/png'});
+
+            if (navigator.share && navigator.canShare?.({files: [file]})) {
+                await navigator.share({files: [file], title: 'QR Code'});
+            } else {
+                // Fallback: download
+                const a = document.createElement('a');
+                a.href = this.generatorQrDataUrl;
+                a.download = 'quickqr.png';
+                a.click();
+            }
+        } catch (err) {
+            console.warn('[Generator] Share failed:', err);
+        }
+    }
+
+    async saveQR() {
+        if (!this.generatorQrDataUrl) return;
+        const a = document.createElement('a');
+        a.href = this.generatorQrDataUrl;
+        a.download = 'quickqr.png';
+        a.click();
+        await this.toast('QR code saved ✓', 'success', 'checkmark-circle-outline');
+    }
+
+    // ── Settings ──────────────────────────────────────────
+
+    toggleHaptic() {
+        this.settings.toggleHaptic();
+        this.cdr.markForCheck();
+    }
+
+    toggleContinuousMode() {
+        this.settings.toggleContinuousMode();
+        this.cdr.markForCheck();
+    }
+
+    setLanguage(lang: 'en' | 'tr') {
+        this.settings.setLanguage(lang);
+        this.cdr.markForCheck();
+    }
+
+    // ── Helpers ───────────────────────────────────────────
 
     private async toast(message: string, color: string, icon: string) {
-        const t = await this.toastController.create({message, color, icon, duration: 2000, position: 'bottom', cssClass: 'copy-toast'});
+        const t = await this.toastController.create({
+            message,
+            color,
+            icon,
+            duration: 2000,
+            position: 'bottom',
+            cssClass: 'copy-toast',
+        });
         await t.present();
     }
 }

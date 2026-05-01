@@ -2,21 +2,40 @@
     <ion-toolbar color="primary">
         <ion-title>
             <div class="header-title-container">
-                <img src="assets/icon.png" alt="QuickQR" class="header-icon"/>
-                QuickQR
+                <img src="assets/icon.png" alt="" class="header-icon" aria-hidden="true"/>
+                {{ i18n.t('app.title') }}
             </div>
         </ion-title>
-        @if (availableCameras.length > 1) {
-            <ion-button slot="end" fill="clear" color="light" (click)="switchCamera()">
-                <ion-icon slot="icon-only" name="camera-reverse-outline"></ion-icon>
+        @if (currentView === 'scanner') {
+            @if (availableCameras.length > 1) {
+                <ion-button slot="end" fill="clear" color="light" (click)="switchCamera()"
+                            [attr.aria-label]="i18n.t('header.switchCamera')">
+                    <ion-icon slot="icon-only" name="camera-reverse-outline"></ion-icon>
+                </ion-button>
+            }
+            <ion-button slot="end" fill="clear" color="light" (click)="toggleTorch()"
+                        [attr.aria-label]="torchEnabled ? i18n.t('header.torch.on') : i18n.t('header.torch.off')"
+                        [attr.aria-pressed]="torchEnabled">
+                <ion-icon slot="icon-only" [name]="torchEnabled ? 'flash' : 'flash-outline'"></ion-icon>
             </ion-button>
-        }
-        <ion-button slot="end" fill="clear" color="light" (click)="toggleTorch()">
-            <ion-icon slot="icon-only" [name]="torchEnabled ? 'flash' : 'flash-outline'"></ion-icon>
-        </ion-button>
-        @if (scannedResult) {
-            <ion-button slot="end" fill="clear" color="light" (click)="clearResult()">
-                <ion-icon slot="icon-only" name="scan-outline"></ion-icon>
+            <ion-button slot="end" fill="clear" color="light" (click)="openGenerator()"
+                        [attr.aria-label]="i18n.t('header.generate')">
+                <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+            </ion-button>
+            @if (scannedResult) {
+                <ion-button slot="end" fill="clear" color="light" (click)="scanAgain()"
+                            [attr.aria-label]="i18n.t('header.scanNew')">
+                    <ion-icon slot="icon-only" name="scan-outline"></ion-icon>
+                </ion-button>
+            }
+            <ion-button slot="end" fill="clear" color="light" (click)="openSettings()"
+                        [attr.aria-label]="i18n.t('header.settings')">
+                <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+            </ion-button>
+        } @else {
+            <ion-button slot="end" fill="clear" color="light" (click)="closeOverlay()"
+                        aria-label="Close">
+                <ion-icon slot="icon-only" name="close-outline"></ion-icon>
             </ion-button>
         }
     </ion-toolbar>
@@ -24,109 +43,445 @@
 
 <ion-content [fullscreen]="true">
 
-    <!-- Permission Denied -->
-    @if (cameraPermissionDenied) {
-        <div class="error-state">
-            <ion-icon name="lock-closed-outline"></ion-icon>
-            <h3>Camera Permission Required</h3>
-            <p>Please allow camera access to scan QR codes.</p>
-            <div class="error-actions">
-                <ion-button fill="solid" color="primary" (click)="retryPermission()">
-                    <ion-icon slot="start" name="refresh-outline"></ion-icon>
-                    Try Again
-                </ion-button>
+    <!-- ═══════ ONBOARDING ═══════ -->
+    @if (currentView === 'onboarding') {
+        <div class="onboarding-container">
+            <div class="onboarding-slides" [style.transform]="'translateX(-' + (onboardingSlide * 100) + '%)'">
+                <!-- Slide 1 -->
+                <div class="onboarding-slide">
+                    <div class="onboarding-icon-wrapper">
+                        <ion-icon name="shield-checkmark-outline"></ion-icon>
+                    </div>
+                    <h2>{{ i18n.t('onboarding.slide1.title') }}</h2>
+                    <p>{{ i18n.t('onboarding.slide1.text') }}</p>
+                </div>
+                <!-- Slide 2 -->
+                <div class="onboarding-slide">
+                    <div class="onboarding-icon-wrapper">
+                        <ion-icon name="color-wand-outline"></ion-icon>
+                    </div>
+                    <h2>{{ i18n.t('onboarding.slide2.title') }}</h2>
+                    <p>{{ i18n.t('onboarding.slide2.text') }}</p>
+                </div>
+                <!-- Slide 3 -->
+                <div class="onboarding-slide">
+                    <div class="onboarding-icon-wrapper">
+                        <ion-icon name="rocket-outline"></ion-icon>
+                    </div>
+                    <h2>{{ i18n.t('onboarding.slide3.title') }}</h2>
+                    <p>{{ i18n.t('onboarding.slide3.text') }}</p>
+                </div>
+            </div>
+
+            <!-- Dots -->
+            <div class="onboarding-dots">
+                @for (dot of [0, 1, 2]; track dot) {
+                    <span class="onboarding-dot" [class.active]="onboardingSlide === dot"></span>
+                }
+            </div>
+
+            <!-- Buttons -->
+            <div class="onboarding-actions">
+                @if (onboardingSlide < 2) {
+                    <ion-button fill="clear" color="medium" (click)="completeOnboarding()">
+                        {{ i18n.t('onboarding.skip') }}
+                    </ion-button>
+                    <ion-button fill="solid" color="primary" (click)="nextOnboardingSlide()">
+                        {{ i18n.t('onboarding.next') }}
+                    </ion-button>
+                } @else {
+                    <ion-button expand="block" fill="solid" color="primary" (click)="completeOnboarding()">
+                        {{ i18n.t('onboarding.start') }}
+                    </ion-button>
+                }
             </div>
         </div>
     }
 
-    <!-- Scanner -->
-    <div class="scanner-wrapper" [class.scanner-paused]="scannerPaused">
-        <zxing-scanner
-            [enable]="scannerEnabled"
-            [torch]="torchEnabled"
-            [formats]="scanFormats"
-            [tryHarder]="true"
-            [delayBetweenScanSuccess]="1500"
-            (scanSuccess)="onCodeResult($event)"
-            (camerasFound)="onCamerasFound($event)"
-            (permissionResponse)="onPermissionResponse($event)">
-        </zxing-scanner>
-        @if (scannerPaused) {
-            <div class="scanner-paused-overlay">
-                <ion-icon name="checkmark-circle" color="success"></ion-icon>
+    <!-- ═══════ QR GENERATOR ═══════ -->
+    @if (currentView === 'generator') {
+        <div class="generator-container">
+            <h2 class="generator-title">{{ i18n.t('generator.title') }}</h2>
+
+            <div class="generator-input-wrapper">
+                <textarea class="generator-input"
+                    [placeholder]="i18n.t('generator.input')"
+                    [(ngModel)]="generatorText"
+                    rows="3"
+                    (keyup.enter)="generateQR()"></textarea>
+            </div>
+
+            <ion-button expand="block" fill="solid" color="primary" (click)="generateQR()"
+                        [disabled]="!generatorText.trim()" class="generator-btn">
+                <ion-icon slot="start" name="qr-code-outline"></ion-icon>
+                {{ i18n.t('generator.generate') }}
+            </ion-button>
+
+            @if (generatorQrDataUrl) {
+                <div class="generator-result">
+                    <div class="generator-qr-wrapper">
+                        <img [src]="generatorQrDataUrl" alt="Generated QR Code" class="generator-qr-image"/>
+                    </div>
+                    <div class="generator-actions">
+                        <ion-button fill="outline" color="primary" (click)="saveQR()">
+                            <ion-icon slot="start" name="download-outline"></ion-icon>
+                            {{ i18n.t('generator.save') }}
+                        </ion-button>
+                        <ion-button fill="solid" color="primary" (click)="shareQR()">
+                            <ion-icon slot="start" name="share-outline"></ion-icon>
+                            {{ i18n.t('generator.share') }}
+                        </ion-button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- ═══════ SETTINGS ═══════ -->
+    @if (currentView === 'settings') {
+        <div class="settings-container">
+            <h2 class="settings-title">{{ i18n.t('settings.title') }}</h2>
+
+            <ion-list lines="full" class="settings-list">
+                <!-- Haptic -->
+                <ion-item>
+                    <ion-icon name="flash-outline" slot="start" color="primary" aria-hidden="true"></ion-icon>
+                    <ion-label>
+                        <h3>{{ i18n.t('settings.haptic') }}</h3>
+                        <p>{{ i18n.t('settings.haptic.desc') }}</p>
+                    </ion-label>
+                    <ion-toggle slot="end" [checked]="settings.hapticEnabled"
+                                (ionChange)="toggleHaptic()"></ion-toggle>
+                </ion-item>
+
+                <!-- Continuous mode -->
+                <ion-item>
+                    <ion-icon name="repeat-outline" slot="start" color="primary" aria-hidden="true"></ion-icon>
+                    <ion-label>
+                        <h3>{{ i18n.t('settings.continuous') }}</h3>
+                        <p>{{ i18n.t('settings.continuous.desc') }}</p>
+                    </ion-label>
+                    <ion-toggle slot="end" [checked]="settings.continuousMode"
+                                (ionChange)="toggleContinuousMode()"></ion-toggle>
+                </ion-item>
+
+                <!-- Language -->
+                <ion-item>
+                    <ion-icon name="text-outline" slot="start" color="primary" aria-hidden="true"></ion-icon>
+                    <ion-label>
+                        <h3>{{ i18n.t('settings.language') }}</h3>
+                    </ion-label>
+                    <div slot="end" class="language-selector">
+                        <ion-button fill="solid" size="small"
+                                    [color]="settings.language === 'en' ? 'primary' : 'medium'"
+                                    (click)="setLanguage('en')">EN</ion-button>
+                        <ion-button fill="solid" size="small"
+                                    [color]="settings.language === 'tr' ? 'primary' : 'medium'"
+                                    (click)="setLanguage('tr')">TR</ion-button>
+                    </div>
+                </ion-item>
+            </ion-list>
+
+            <!-- About -->
+            <div class="settings-about">
+                <div class="settings-about-brand">
+                    <img src="assets/icon.png" alt="QuickQR" class="settings-about-logo"/>
+                    <div>
+                        <h3>QuickQR</h3>
+                        <p class="settings-about-version">v2.0.0</p>
+                    </div>
+                </div>
+                <p class="settings-about-developer">
+                    {{ i18n.t('settings.madeBy') }}
+                    <a href="https://medevstudios.com" target="_blank" rel="noopener">MEDEV Studios</a>
+                </p>
+                <p class="settings-about-copyright">© 2026 MEDEV Studios. All rights reserved.</p>
+                <a href="https://medevstudios.com" target="_blank" rel="noopener" class="settings-about-link">
+                    medevstudios.com
+                </a>
+            </div>
+        </div>
+    }
+
+    <!-- ═══════ SCANNER VIEW ═══════ -->
+    @if (currentView === 'scanner') {
+        <!-- Screen Reader Live Region -->
+        <div aria-live="polite" aria-atomic="true" class="sr-only">
+            @if (scannedResult) {
+                QR code scanned: {{ typeDetector.getLabel(resultType) }} — {{ scannedResult }}
+            }
+        </div>
+
+        <!-- Insecure Context -->
+        @if (cameraPermissionDenied && insecureContext) {
+            <div class="error-state" role="alert">
+                <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ i18n.t('permission.insecure.title') }}</h3>
+                <p>{{ i18n.t('permission.insecure.message') }}</p>
+                <div class="error-hint">
+                    <p>Use one of these instead:</p>
+                    <code>ionic cap run android -l</code>
+                    <code>npm run build && npx cap run android</code>
+                </div>
+                <div class="error-actions">
+                    <ion-button fill="solid" color="primary" (click)="retryPermission()">
+                        <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                        {{ i18n.t('permission.retry') }}
+                    </ion-button>
+                </div>
             </div>
         }
-    </div>
 
-    <!-- Result Card -->
-    @if (scannedResult) {
-        <div class="result-card">
-            <ion-card>
-                <ion-card-header>
-                    <ion-card-subtitle>{{ latestScanTime | date:'HH:mm:ss' }}</ion-card-subtitle>
-                    <ion-card-title style="font-size: 18px;">Scan Result</ion-card-title>
-                </ion-card-header>
-                <ion-card-content>
-                    <ion-chip [color]="getTypeColor(resultType)" class="type-chip">
-                        <ion-icon [name]="getTypeIcon(resultType)" style="margin-right: 4px; font-size: 14px;"></ion-icon>
-                        {{ getTypeLabel(resultType) }}
-                    </ion-chip>
-                    <p class="result-text" style="margin-top: 10px;">{{ scannedResult }}</p>
-                    <div class="result-actions">
-                        <ion-button size="small" fill="outline" color="primary" (click)="copyToClipboard(scannedResult)">
-                            <ion-icon slot="start" name="copy-outline"></ion-icon>
-                            Copy
-                        </ion-button>
-                        @if (resultIsUrl) {
-                            <ion-button size="small" fill="solid" color="primary" (click)="openUrl(scannedResult)">
-                                <ion-icon slot="start" name="open-outline"></ion-icon>
-                                Open
-                            </ion-button>
-                        }
-                        @if (isActionable(resultType) && !resultIsUrl) {
-                            <ion-button size="small" fill="solid" color="primary" (click)="openActionable(scannedResult, resultType)">
-                                <ion-icon slot="start" [name]="getTypeIcon(resultType)"></ion-icon>
-                                Open
-                            </ion-button>
-                        }
-                    </div>
-                </ion-card-content>
-            </ion-card>
-        </div>
-    }
-
-    <!-- Empty State -->
-    @if (!scannedResult && scanHistory.length === 0 && !cameraPermissionDenied) {
-        <div class="empty-state">
-            <ion-icon name="qr-code-outline"></ion-icon>
-            <h3>Scan a QR Code</h3>
-            <p>Position the QR code inside the frame to scan</p>
-        </div>
-    }
-
-    <!-- Scan History -->
-    @if (scanHistory.length > 0) {
-        <div class="history-section">
-            <div class="history-header">
-                <h3>Recent Scans</h3>
-                <ion-button fill="clear" size="small" color="danger" (click)="clearHistory()">
-                    Clear
-                </ion-button>
+        <!-- Permission Denied -->
+        @if (cameraPermissionDenied && !insecureContext) {
+            <div class="error-state" role="alert">
+                <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ i18n.t('permission.title') }}</h3>
+                <p>{{ i18n.t('permission.message') }}</p>
+                <div class="error-actions">
+                    <ion-button fill="solid" color="primary" (click)="retryPermission()">
+                        <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                        {{ i18n.t('permission.retry') }}
+                    </ion-button>
+                </div>
             </div>
-            <ion-list lines="none">
-                @for (item of scanHistory; track item.id) {
-                    <ion-item [button]="true" (click)="selectFromHistory(item)">
-                        <ion-icon [name]="getTypeIcon(item.type)" slot="start" color="primary" style="font-size: 20px;"></ion-icon>
-                        <ion-label>
-                            <h2 style="font-size: 14px; font-weight: 500;">{{ item.text.length > 50 ? item.text.substring(0, 50) + '…' : item.text }}</h2>
-                            <p style="font-size: 12px;">{{ item.date | date:'d MMM, HH:mm' }}</p>
-                        </ion-label>
-                        <ion-note slot="end">
-                            <ion-icon name="chevron-forward-outline" style="font-size: 16px; color: var(--ion-color-medium);"></ion-icon>
-                        </ion-note>
-                    </ion-item>
+        }
+
+        <!-- Scanner — only rendered after camera permission is confirmed -->
+        @if (scannerEnabled) {
+            <div class="scanner-wrapper" [class.scanner-paused]="scannerPaused">
+                <zxing-scanner
+                    [enable]="true"
+                    [torch]="torchEnabled"
+                    [formats]="scanFormats"
+                    [tryHarder]="true"
+                    [delayBetweenScanSuccess]="1500"
+                    (scanSuccess)="onCodeResult($event)"
+                    (camerasFound)="onCamerasFound($event)"
+                    (permissionResponse)="onPermissionResponse($event)">
+                </zxing-scanner>
+                @if (scannerPaused) {
+                    <div class="scanner-paused-overlay" aria-hidden="true">
+                        <ion-icon name="checkmark-circle" color="success"></ion-icon>
+                    </div>
                 }
-            </ion-list>
-        </div>
+            </div>
+        }
+
+        <!-- Scanner toolbar (gallery + batch mode) -->
+        @if (!scannedResult && scannerEnabled) {
+            <div class="scanner-toolbar">
+                <ion-button fill="clear" size="small" color="primary" (click)="scanFromGallery()">
+                    <ion-icon slot="start" name="image-outline"></ion-icon>
+                    {{ i18n.t('scan.gallery') }}
+                </ion-button>
+                @if (settings.continuousMode) {
+                    <ion-chip color="primary" class="batch-chip">
+                        <ion-icon name="repeat-outline"></ion-icon>
+                        {{ i18n.t('scan.batch') }}
+                    </ion-chip>
+                }
+            </div>
+        }
+
+        <!-- Result Card -->
+        @if (scannedResult) {
+            <div class="result-card">
+                <ion-card>
+                    <ion-card-header>
+                        <ion-card-subtitle>{{ latestScanTime | date:'HH:mm:ss' }}</ion-card-subtitle>
+                        <ion-card-title class="result-card-title">{{ i18n.t('scan.result.title') }}</ion-card-title>
+                    </ion-card-header>
+                    <ion-card-content>
+                        <ion-chip [color]="typeDetector.getColor(resultType)" class="type-chip">
+                            <ion-icon [name]="typeDetector.getIcon(resultType)" class="type-chip-icon"
+                                      aria-hidden="true"></ion-icon>
+                            {{ typeDetector.getLabel(resultType) }}
+                        </ion-chip>
+
+                        <!-- Wi-Fi Parsed Details -->
+                        @if (resultType === 'wifi' && wifiData) {
+                            <div class="wifi-details">
+                                <div class="wifi-field">
+                                    <ion-icon name="wifi-outline" aria-hidden="true"></ion-icon>
+                                    <div class="wifi-field-content">
+                                        <span class="wifi-label">{{ i18n.t('wifi.network') }}</span>
+                                        <span class="wifi-value">{{ wifiData.ssid || i18n.t('wifi.hidden') }}</span>
+                                    </div>
+                                </div>
+                                <div class="wifi-field">
+                                    <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+                                    <div class="wifi-field-content">
+                                        <span class="wifi-label">{{ i18n.t('wifi.security') }}</span>
+                                        <span class="wifi-value">{{ wifiData.security }}</span>
+                                    </div>
+                                </div>
+                                @if (wifiData.password) {
+                                    <div class="wifi-field">
+                                        <ion-icon name="key-outline" aria-hidden="true"></ion-icon>
+                                        <div class="wifi-field-content">
+                                            <span class="wifi-label">{{ i18n.t('wifi.password') }}</span>
+                                            <span class="wifi-value wifi-password">{{ showWifiPassword ? wifiData.password : '••••••••' }}</span>
+                                        </div>
+                                        <ion-button fill="clear" size="small" class="wifi-toggle-btn"
+                                                    (click)="showWifiPassword = !showWifiPassword"
+                                                    [attr.aria-label]="showWifiPassword ? i18n.t('wifi.hidePassword') : i18n.t('wifi.showPassword')">
+                                            <ion-icon slot="icon-only"
+                                                      [name]="showWifiPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                                        </ion-button>
+                                    </div>
+                                    <div class="result-actions">
+                                        <ion-button size="small" fill="outline" color="primary"
+                                                    (click)="copyToClipboard(wifiData.password)">
+                                            <ion-icon slot="start" name="copy-outline"></ion-icon>
+                                            {{ i18n.t('action.copyPassword') }}
+                                        </ion-button>
+                                        <ion-button size="small" fill="outline" color="primary"
+                                                    (click)="copyToClipboard(scannedResult)">
+                                            <ion-icon slot="start" name="copy-outline"></ion-icon>
+                                            {{ i18n.t('action.copyAll') }}
+                                        </ion-button>
+                                    </div>
+                                }
+                                @if (wifiData.hidden) {
+                                    <div class="wifi-hidden-badge">
+                                        <ion-icon name="eye-off-outline" aria-hidden="true"></ion-icon>
+                                        {{ i18n.t('wifi.hidden') }}
+                                    </div>
+                                }
+                            </div>
+                        } @else if (resultType === 'vcard' && vcardName) {
+                            <p class="result-text result-summary">
+                                <ion-icon name="person-outline" aria-hidden="true" class="result-summary-icon"></ion-icon>
+                                {{ vcardName }}
+                            </p>
+                            <p class="result-text result-raw">{{ scannedResult }}</p>
+                            <div class="result-actions">
+                                <ion-button size="small" fill="outline" color="primary"
+                                            (click)="copyToClipboard(scannedResult)">
+                                    <ion-icon slot="start" name="copy-outline"></ion-icon>
+                                    {{ i18n.t('action.copy') }}
+                                </ion-button>
+                            </div>
+                        } @else if (resultType === 'calendar' && eventSummary) {
+                            <p class="result-text result-summary">
+                                <ion-icon name="calendar-outline" aria-hidden="true"
+                                          class="result-summary-icon"></ion-icon>
+                                {{ eventSummary }}
+                            </p>
+                            <p class="result-text result-raw">{{ scannedResult }}</p>
+                            <div class="result-actions">
+                                <ion-button size="small" fill="outline" color="primary"
+                                            (click)="copyToClipboard(scannedResult)">
+                                    <ion-icon slot="start" name="copy-outline"></ion-icon>
+                                    {{ i18n.t('action.copy') }}
+                                </ion-button>
+                            </div>
+                        } @else {
+                            <p class="result-text">{{ scannedResult }}</p>
+                            <div class="result-actions">
+                                <ion-button size="small" fill="outline" color="primary"
+                                            (click)="copyToClipboard(scannedResult)">
+                                    <ion-icon slot="start" name="copy-outline"></ion-icon>
+                                    {{ i18n.t('action.copy') }}
+                                </ion-button>
+                                @if (typeDetector.isActionable(resultType)) {
+                                    <ion-button size="small" fill="solid" color="primary"
+                                                (click)="openActionable(scannedResult, resultType)">
+                                        <ion-icon slot="start" [name]="typeDetector.getIcon(resultType)"></ion-icon>
+                                        {{ i18n.t('action.open') }}
+                                    </ion-button>
+                                }
+                            </div>
+                        }
+
+                        <!-- Scan Again -->
+                        <div class="scan-again-container">
+                            <ion-button expand="block" fill="clear" color="primary" (click)="scanAgain()"
+                                        class="scan-again-btn">
+                                <ion-icon slot="start" name="scan-outline"></ion-icon>
+                                {{ i18n.t('scan.again') }}
+                            </ion-button>
+                        </div>
+                    </ion-card-content>
+                </ion-card>
+            </div>
+        }
+
+        <!-- Empty State -->
+        @if (!scannedResult && history.items.length === 0 && !cameraPermissionDenied) {
+            <div class="empty-state">
+                <div class="empty-state-icon-wrapper">
+                    <ion-icon name="qr-code-outline" aria-hidden="true"></ion-icon>
+                </div>
+                <h3>{{ i18n.t('scan.empty.title') }}</h3>
+                <p>{{ i18n.t('scan.empty.subtitle') }}</p>
+            </div>
+        }
+
+        <!-- Scan History -->
+        @if (history.items.length > 0) {
+            <section class="history-section" aria-labelledby="history-heading">
+                <div class="history-header">
+                    <h3 id="history-heading">{{ i18n.t('history.title') }}</h3>
+                    <div class="history-header-actions">
+                        <ion-button fill="clear" size="small" color="primary" (click)="showExportOptions()"
+                                    [attr.aria-label]="i18n.t('action.export')">
+                            <ion-icon slot="icon-only" name="share-outline"></ion-icon>
+                        </ion-button>
+                        <ion-button fill="clear" size="small" color="danger" (click)="confirmClearHistory()"
+                                    aria-label="Clear all scan history">
+                            {{ i18n.t('history.clear') }}
+                        </ion-button>
+                    </div>
+                </div>
+
+                <!-- Search -->
+                @if (history.items.length > 3) {
+                    <ion-searchbar mode="ios"
+                                   [placeholder]="i18n.t('history.search')"
+                                   [(ngModel)]="historySearchQuery"
+                                   class="history-search"
+                                   [debounce]="250">
+                    </ion-searchbar>
+                }
+
+                <ion-list lines="none">
+                    @for (item of filteredHistory; track item.id) {
+                        <ion-item-sliding>
+                            <ion-item [button]="true" (click)="selectFromHistory(item)"
+                                      [attr.aria-label]="typeDetector.getLabel(item.type) + ': ' + item.text">
+                                <ion-icon [name]="typeDetector.getIcon(item.type)" slot="start" color="primary"
+                                          class="history-item-icon" aria-hidden="true"></ion-icon>
+                                <ion-label>
+                                    <h2 class="history-item-title">
+                                        {{ item.text.length > truncateLength ? item.text.substring(0, truncateLength) + '…' : item.text }}
+                                    </h2>
+                                    <p class="history-item-date">{{ item.date | date:'d MMM, HH:mm' }}</p>
+                                </ion-label>
+                                <ion-note slot="end">
+                                    <ion-icon name="chevron-forward-outline" class="history-chevron"
+                                              aria-hidden="true"></ion-icon>
+                                </ion-note>
+                            </ion-item>
+
+                            <ion-item-options side="end">
+                                <ion-item-option color="danger" (click)="removeHistoryItem(item.id)"
+                                                aria-label="Delete this scan">
+                                    <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                                </ion-item-option>
+                            </ion-item-options>
+                        </ion-item-sliding>
+                    }
+                </ion-list>
+
+                @if (filteredHistory.length === 0 && historySearchQuery) {
+                    <div class="history-empty-search">
+                        <p>{{ i18n.t('history.empty') }}</p>
+                    </div>
+                }
+            </section>
+        }
     }
+
 </ion-content>
