@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Locale configuration for per-app language preferences (Android 13+).
+   This enables the system Settings > App Language picker.
+-->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="tr" />
+</locale-config>

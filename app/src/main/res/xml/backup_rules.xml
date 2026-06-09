@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Full backup content rules for pre-Android 12 (API < 31).
+   Include only user settings; exclude everything else by default.
+-->
+<full-backup-content>
+    <include domain="sharedpref" path="." />
+</full-backup-content>
