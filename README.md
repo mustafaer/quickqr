@@ -1,9 +1,9 @@
 # QuickQR
 
-> Fast, private, and ad-free QR code scanner for Android.
+> Fast, private, and 100% offline QR code scanner & generator for Android. Built natively using Jetpack Compose.
 
 <p align="center">
-  <img src="resources/icon.png" alt="QuickQR" width="120" />
+  <img src="/Users/mustafaer/.gemini/antigravity-ide/brain/67caf8c1-e76a-4c7e-8662-7a11600127af/quickqr_feature_graphic_horizontal_1781003918274.png" alt="QuickQR Banner" width="100%" />
 </p>
 
 <p align="center">
@@ -14,119 +14,92 @@
 
 ---
 
+QuickQR is a premium, lightweight, and professional-grade QR code scanner, barcode reader, and custom QR generator for Android. Built entirely from scratch with **Kotlin and Jetpack Compose**, it prioritizes speed, high-quality user experience, and absolute user privacy by working **100% offline with zero advertisements**.
+
 ## ✨ Features
 
-- ⚡ **Lightning-fast scanning** — point and scan instantly
-- 🔍 **Smart detection** — automatically recognizes URLs, Wi-Fi, email, phone, and location QR codes
-- 📋 **One-tap copy & open** — copy results to clipboard or open directly
-- 📜 **Scan history** — keeps your last 20 scans with type icons, stored locally
-- 📸 **Camera controls** — front/back switch & flashlight toggle
-- 🌗 **Dark mode** — follows your system theme
-- 📳 **Haptic feedback** — subtle vibration on successful scan
-- 🔒 **Private** — no tracking, no analytics, no data collection
-- 🚫 **Ad-free** — no ads, no in-app purchases, ever
-
-## 📱 Supported QR Types
-
-| Type | Icon | Action |
-|------|------|--------|
-| URL | 🔗 | Open in browser |
-| Wi-Fi | 📶 | Detect network info |
-| Email | ✉️ | Open mail client |
-| Phone | 📞 | Open dialer |
-| Location | 📍 | Open maps |
-| Text | 📝 | Copy to clipboard |
+- ⚡ **Lightning-Fast Scanning** — Powered by Google's ML Kit Barcode Scanning API for near-instant QR and barcode detection.
+- 🎨 **Custom QR Generator** — Generate high-quality QR codes in seconds for URLs, Wi-Fi, email, phone numbers, SMS, and plain text.
+- 🔒 **Privacy First (100% Offline)** — The app does **not** request `INTERNET` permission. All processing and storage happen locally on your device.
+- 📁 **Searchable History & Exports** — Keep track of your scans with local database storage. Export your history easily to CSV or JSON formats.
+- ⚡ **Intelligent Context Actions** — Open URLs instantly, connect to Wi-Fi networks, send emails/SMS, or call numbers directly from scan results.
+- 🎨 **Modern Material 3 Design** — Full support for system Light/Dark mode, featuring beautiful transitions, responsive layouts, and standard premium buttons.
+- 🔋 **Zero Bloat & Battery Efficient** — No trackers, no background processes, and zero ads to preserve your device performance.
 
 ## 🛠️ Tech Stack
 
-- **Framework:** [Angular 20](https://angular.dev/) + [Ionic 8](https://ionicframework.com/)
-- **Native:** [Capacitor 7](https://capacitorjs.com/)
-- **Scanner:** [@zxing/ngx-scanner](https://github.com/nicemustafa/ngx-scanner) (QR Code, Data Matrix, Aztec)
-- **Language:** TypeScript 5.8
-- **Platform:** Android (minSdk 23)
+- **Language:** Kotlin 2.x
+- **UI Framework:** Jetpack Compose (Material 3)
+- **Scanning API:** Google ML Kit Barcode Scanning & CameraX
+- **Local Storage:** Jetpack Room (SQLite) for history, Preferences DataStore for settings
+- **QR Code Generation:** ZXing (Zebra Crossing)
+- **Platform:** Native Android (minSdk 26, targetSdk 36)
+- **Build System:** Kotlin DSL (`build.gradle.kts`) with R8/ProGuard compiler optimizations
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 18+
-- [Android Studio](https://developer.android.com/studio) with SDK 35
-- JDK 21
+- [Android Studio](https://developer.android.com/studio) (Koala/Ladybug or newer)
+- Java Development Kit (JDK) 17 or 21
+- Android SDK 36 (Android 16 API level support)
 
-### Installation
+### Setup & Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/nicemustafa/quickqr.git
-cd quickqr
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/nicemustafa/quickqr.git
+   cd quickqr
+   ```
 
-# Install dependencies
-npm install
+2. **Open the project** in Android Studio.
 
-# Build the web app
-npm run build
+3. **Build the Debug APK:**
+   ```bash
+   ./gradlew assembleDebug
+   ```
 
-# Sync with Android
-npx cap sync android
-```
-
-### Development
-
-```bash
-# Start dev server
-npm start
-
-# Build for production
-npm run build
-
-# Sync & open in Android Studio
-npx cap sync android
-npx cap open android
-```
-
-### Run on Device
-
-```bash
-# Build + sync + run on connected device
-npm run build && npx cap sync android && npx cap run android
-```
+4. **Build the Optimized Release APK / App Bundle:**
+   ```bash
+   ./gradlew assembleRelease
+   ```
+   *Note: Ensure you configure your signing properties in `keystore.properties` for production releases.*
 
 ## 📦 Project Structure
 
-```
+```text
 quickqr/
-├── src/
-│   ├── app/
-│   │   ├── app.component.ts       # Main component with scanner logic
-│   │   └── app.component.html     # UI template
-│   ├── theme/
-│   │   └── variables.scss          # Custom color palette
-│   ├── global.scss                 # Global styles & animations
-│   └── index.html
-├── android/                        # Capacitor Android project
-├── capacitor.config.ts             # Capacitor configuration
-└── package.json
+├── app/
+│   ├── proguard-rules.pro        # Comprehensive 100+ line ProGuard ruleset
+│   ├── build.gradle.kts          # App-level build configurations & dependencies
+│   └── src/main/
+│       ├── AndroidManifest.xml   # Target API 35/36 & hardened offline permissions
+│       ├── java/net/mustafaer/quickqr/
+│       │   ├── data/             # Room Database, DAOs, DataStore repository
+│       │   ├── ui/
+│       │   │   ├── screens/      # Scanner, Generator, History, Settings Screens
+│       │   │   ├── components/   # Unified buttons, bottom sheets, layouts
+│       │   │   └── theme/        # Material 3 colors, shapes, typography
+│       │   └── MainActivity.kt
+│       └── res/                  # Localized strings, backup policies, locales configs
+└── build.gradle.kts              # Project-level build configurations
 ```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
-## 👤 Author
+## 👤 Author & Studio
 
-**Mustafa ER**
-- Website: [mustafaer.net](https://mustafaer.net)
+**Mustafa ER** (Founder of MEDEV Studios)
+- Website: [MEDEV Studios](https://medevstudios.com)
+- Privacy Policy: [QuickQR Privacy Policy](https://medevstudios.com/quickqr/privacy-policy.html)
 - Email: mustafaerpro@gmail.com
 - GitHub: [@nicemustafa](https://github.com/nicemustafa)
 
 ## 💖 Support
 
-If you find QuickQR useful, consider supporting the project:
-
+If you find QuickQR useful, feel free to support:
 - ⭐ Star this repository
 - ☕ [Buy me a coffee](https://www.buymeacoffee.com/mustafaer)
 - 🎉 [Patreon](https://www.patreon.com/mustafaer)
