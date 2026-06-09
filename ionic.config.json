@@ -1,7 +1,0 @@
-{
-  "name": "QuickQR",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "angular-standalone"
-}
