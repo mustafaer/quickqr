@@ -48,7 +48,7 @@ QuickQR is a premium, lightweight, and professional-grade QR code scanner, barco
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/nicemustafa/quickqr.git
+   git clone https://github.com/mustafaer/quickqr.git
    cd quickqr
    ```
 
@@ -95,7 +95,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 - Website: [MEDEV Studios](https://medevstudios.com)
 - Privacy Policy: [QuickQR Privacy Policy](https://medevstudios.com/quickqr/privacy-policy.html)
 - Email: mustafaerpro@gmail.com
-- GitHub: [@nicemustafa](https://github.com/nicemustafa)
+- GitHub: [@mustafaer](https://github.com/mustafaer)
 
 ## 💖 Support
 
