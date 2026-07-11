@@ -2,6 +2,7 @@ package net.mustafaer.quickqr.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,17 +35,17 @@ fun SettingsScreen(
     language: String,
     onHapticToggle: (Boolean) -> Unit,
     onContinuousToggle: (Boolean) -> Unit,
-    onLanguageSelect: (String) -> Unit
+    onLanguageSelect: (String) -> Unit,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val context = LocalContext.current
-    var showLanguageMenu by remember { mutableStateOf(false) }
+    var showLanguageMenu by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .navigationBarsPadding()
+            .padding(contentPadding)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
@@ -133,7 +135,13 @@ fun SettingsScreen(
 
                         Box {
                             Text(
-                                text = if (language == "tr") "Türkçe" else "English",
+                                text = when (language) {
+                                    "tr" -> "Türkçe"
+                                    "hi" -> "हिन्दी"
+                                    "ar" -> "العربية"
+                                    "de" -> "Deutsch"
+                                    else -> "English"
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Medium
@@ -154,6 +162,27 @@ fun SettingsScreen(
                                     text = { Text("Türkçe") },
                                     onClick = {
                                         onLanguageSelect("tr")
+                                        showLanguageMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("हिन्दी") },
+                                    onClick = {
+                                        onLanguageSelect("hi")
+                                        showLanguageMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("العربية") },
+                                    onClick = {
+                                        onLanguageSelect("ar")
+                                        showLanguageMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Deutsch") },
+                                    onClick = {
+                                        onLanguageSelect("de")
                                         showLanguageMenu = false
                                     }
                                 )
@@ -182,7 +211,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .clickable {
                         try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://medevstudios.com/quickqr/privacy-policy.html"))
+                            val intent = Intent(Intent.ACTION_VIEW, "https://medevstudios.com/quickqr/privacy-policy.html".toUri())
                             context.startActivity(intent)
                         } catch (e: Exception) {
                             // ignore
@@ -196,7 +225,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .clickable {
                         try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://medevstudios.com/"))
+                            val intent = Intent(Intent.ACTION_VIEW, "https://medevstudios.com/".toUri())
                             context.startActivity(intent)
                         } catch (e: Exception) {
                             // ignore

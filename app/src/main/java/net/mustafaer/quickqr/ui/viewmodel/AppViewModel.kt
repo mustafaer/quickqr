@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.widget.Toast
 import android.os.Environment
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.FileProvider
@@ -14,10 +15,15 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -40,19 +46,22 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
     private val scanDao = database.scanDao()
     private val settingsDataStore = SettingsDataStore(application)
+    private var lastScannedText: String? = null
+    private var lastScannedTime: Long = 0
+    private var qrGenerateJob: Job? = null
 
     // --- Settings flows ---
     val hapticEnabled = settingsDataStore.hapticEnabledFlow.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), true
+        viewModelScope, SharingStarted.Eagerly, true
     )
     val continuousMode = settingsDataStore.continuousModeFlow.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), false
+        viewModelScope, SharingStarted.Eagerly, false
     )
     val onboardingComplete = settingsDataStore.onboardingCompleteFlow.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), false
+        viewModelScope, SharingStarted.Eagerly, null
     )
     val language = settingsDataStore.languageFlow.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), "en"
+        viewModelScope, SharingStarted.Eagerly, null
     )
 
     // --- History search query flow ---
@@ -60,8 +69,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val historySearchQuery = _historySearchQuery.asStateFlow()
 
     // --- History items flow ---
-    @OptIn(ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val historyItems: StateFlow<List<ScanEntity>> = _historySearchQuery
+        .debounce { query -> if (query.isBlank()) 0L else 300L }
         .flatMapLatest { query ->
             if (query.isBlank()) {
                 scanDao.getAllScans()
@@ -93,40 +103,63 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         // Apply saved language on startup
         viewModelScope.launch {
             language.collect { lang ->
-                applyLocale(lang)
+                if (lang != null) {
+                    applyLocale(lang)
+                }
             }
         }
     }
 
     // --- Scan handling ---
-    fun onCodeScanned(text: String) {
-        if (_isScannerPaused.value) return
-        val type = TypeDetector.detect(text)
-        _scannedResult.value = text
-        _scannedType.value = type
-        _isScannerPaused.value = true
+    fun onCodeScanned(text: String, force: Boolean = false) {
+        viewModelScope.launch {
+            if (_isScannerPaused.value && !force) return@launch
 
-        // Add to Room
-        viewModelScope.launch(Dispatchers.IO) {
-            val entity = ScanEntity(text = text, type = type.typeStr)
-            scanDao.insertScan(entity)
-            // Limit to last 100 scans or keep unlimited? Let's cap history at 100 scans for performance.
-            scanDao.capHistorySize(100)
-        }
+            val currentTime = System.currentTimeMillis()
+            if (continuousMode.value) {
+                // Prevent duplicate scans within 2 seconds
+                if (text == lastScannedText && (currentTime - lastScannedTime) < 2000) {
+                    return@launch
+                }
+                lastScannedText = text
+                lastScannedTime = currentTime
 
-        // Haptic feedback
-        if (hapticEnabled.value) {
-            HapticHelper.triggerHapticFeedback(getApplication())
-        }
+                val type = TypeDetector.detect(text)
 
-        // Continuous mode: automatically resume after 3 seconds
-        if (continuousMode.value) {
-            viewModelScope.launch {
-                kotlinx.coroutines.delay(3000)
-                resumeScanner()
+                // Add to Room
+                viewModelScope.launch(Dispatchers.IO) {
+                    val entity = ScanEntity(text = text, type = type.typeStr)
+                    scanDao.insertAndCap(entity, 100)
+                }
+
+                // Haptic feedback
+                if (hapticEnabled.value) {
+                    HapticHelper.triggerHapticFeedback(getApplication())
+                }
+
+                // Show a feedback toast
+                val messageText = if (text.length > 30) text.take(30) + "..." else text
+                Toast.makeText(getApplication(), messageText, Toast.LENGTH_SHORT).show()
+            } else {
+                _isScannerPaused.value = true
+                val type = TypeDetector.detect(text)
+                _scannedResult.value = text
+                _scannedType.value = type
+
+                // Add to Room
+                viewModelScope.launch(Dispatchers.IO) {
+                    val entity = ScanEntity(text = text, type = type.typeStr)
+                    scanDao.insertAndCap(entity, 100)
+                }
+
+                // Haptic feedback
+                if (hapticEnabled.value) {
+                    HapticHelper.triggerHapticFeedback(getApplication())
+                }
             }
         }
     }
+
 
     fun resumeScanner() {
         _scannedResult.value = null
@@ -166,22 +199,33 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun applyLocale(langCode: String) {
-        val appLocale = LocaleListCompat.forLanguageTags(langCode)
-        AppCompatDelegate.setApplicationLocales(appLocale)
+        val currentLocales = AppCompatDelegate.getApplicationLocales()
+        val targetLocale = LocaleListCompat.forLanguageTags(langCode)
+        if (currentLocales.toLanguageTags() != targetLocale.toLanguageTags()) {
+            AppCompatDelegate.setApplicationLocales(targetLocale)
+        }
     }
 
     // --- QR Generator logic ---
     fun updateGeneratorText(text: String) {
         _generatorText.value = text
+        qrGenerateJob?.cancel()
         if (text.isBlank()) {
             _generatedQrBitmap.value = null
+        } else {
+            qrGenerateJob = viewModelScope.launch(Dispatchers.Default) {
+                delay(250)
+                val bitmap = QrGenerator.generate(text, 512)
+                _generatedQrBitmap.value = bitmap
+            }
         }
     }
 
     fun generateQrCode() {
         val text = _generatorText.value
         if (text.isNotBlank()) {
-            viewModelScope.launch(Dispatchers.Default) {
+            qrGenerateJob?.cancel()
+            qrGenerateJob = viewModelScope.launch(Dispatchers.Default) {
                 val bitmap = QrGenerator.generate(text, 512)
                 _generatedQrBitmap.value = bitmap
             }
@@ -191,26 +235,39 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     // --- Gallery Scan logic ---
     fun scanFromGallery(uri: Uri, onSuccess: (String) -> Unit, onFailure: () -> Unit) {
         val context = getApplication<Application>()
-        try {
-            val image = InputImage.fromFilePath(context, uri)
-            val scanner = BarcodeScanning.getClient()
-            scanner.process(image)
-                .addOnSuccessListener { barcodes ->
-                    val barcode = barcodes.firstOrNull()
-                    val rawValue = barcode?.rawValue
-                    if (rawValue != null) {
-                        onCodeScanned(rawValue)
-                        onSuccess(rawValue)
-                    } else {
-                        onFailure()
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val image = InputImage.fromFilePath(context, uri)
+                val scanner = BarcodeScanning.getClient()
+                scanner.process(image)
+                    .addOnSuccessListener { barcodes ->
+                        val barcode = barcodes.firstOrNull()
+                        val rawValue = barcode?.rawValue
+                        if (rawValue != null) {
+                            onCodeScanned(rawValue, force = true)
+                            viewModelScope.launch(Dispatchers.Main) {
+                                onSuccess(rawValue)
+                            }
+                        } else {
+                            viewModelScope.launch(Dispatchers.Main) {
+                                onFailure()
+                            }
+                        }
                     }
-                }
-                .addOnFailureListener {
+                    .addOnFailureListener {
+                        viewModelScope.launch(Dispatchers.Main) {
+                            onFailure()
+                        }
+                    }
+                    .addOnCompleteListener {
+                        scanner.close()
+                    }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                viewModelScope.launch(Dispatchers.Main) {
                     onFailure()
                 }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            onFailure()
+            }
         }
     }
 
@@ -233,16 +290,28 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- History Export files ---
     suspend fun getExportFileUri(format: String): Uri? = withContext(Dispatchers.IO) {
-        val scans = historyItems.value
+        val scans = scanDao.getAllScans().first()
         if (scans.isEmpty()) return@withContext null
 
         val context = getApplication<Application>()
+        try {
+            context.cacheDir.listFiles()?.forEach { file ->
+                if (file.name.startsWith("quickqr_history_")) {
+                    file.delete()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         val filename = "quickqr_history_${System.currentTimeMillis()}.$format"
         val cacheFile = File(context.cacheDir, filename)
 
         try {
             FileOutputStream(cacheFile).use { fos ->
                 if (format == "csv") {
+                    // Write UTF-8 BOM to support Excel showing non-ASCII characters correctly
+                    fos.write(byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte()))
                     fos.write("id,text,type,date\n".toByteArray())
                     scans.forEach { scan ->
                         val dateStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(scan.timestamp))
@@ -250,26 +319,17 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                         fos.write("${scan.id},\"$cleanText\",${scan.type},\"$dateStr\"\n".toByteArray())
                     }
                 } else {
-                    // Simple JSON manual builder to avoid GSON dependency
-                    val sb = java.lang.StringBuilder()
-                    sb.append("[\n")
-                    scans.forEachIndexed { index, scan ->
-                        val cleanText = scan.text
-                            .replace("\\", "\\\\")
-                            .replace("\"", "\\\"")
-                            .replace("\n", "\\n")
-                            .replace("\r", "\\r")
-                        sb.append("  {\n")
-                        sb.append("    \"id\": ${scan.id},\n")
-                        sb.append("    \"text\": \"$cleanText\",\n")
-                        sb.append("    \"type\": \"${scan.type}\",\n")
-                        sb.append("    \"timestamp\": ${scan.timestamp}\n")
-                        sb.append("  }")
-                        if (index < scans.size - 1) sb.append(",")
-                        sb.append("\n")
+                    val jsonArray = org.json.JSONArray()
+                    scans.forEach { scan ->
+                        val jsonObject = org.json.JSONObject().apply {
+                            put("id", scan.id)
+                            put("text", scan.text)
+                            put("type", scan.type)
+                            put("timestamp", scan.timestamp)
+                        }
+                        jsonArray.put(jsonObject)
                     }
-                    sb.append("]")
-                    fos.write(sb.toString().toByteArray())
+                    fos.write(jsonArray.toString(2).toByteArray())
                 }
             }
             FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", cacheFile)
@@ -283,6 +343,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun getQrCodeShareUri(): Uri? = withContext(Dispatchers.IO) {
         val bitmap = _generatedQrBitmap.value ?: return@withContext null
         val context = getApplication<Application>()
+        try {
+            context.cacheDir.listFiles()?.forEach { file ->
+                if (file.name.startsWith("quickqr_generated_")) {
+                    file.delete()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         val cacheFile = File(context.cacheDir, "quickqr_generated_${System.currentTimeMillis()}.png")
 
         try {
@@ -314,17 +384,24 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val resolver = context.contentResolver
             val uri = resolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
             if (uri != null) {
-                resolver.openOutputStream(uri).use { outputStream ->
-                    if (outputStream != null) {
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                try {
+                    resolver.openOutputStream(uri).use { outputStream ->
+                        if (outputStream != null) {
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                        } else {
+                            throw java.io.IOException("Failed to open output stream")
+                        }
                     }
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        contentValues.clear()
+                        contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+                        resolver.update(uri, contentValues, null, null)
+                    }
+                    uri
+                } catch (writeException: Exception) {
+                    resolver.delete(uri, null, null)
+                    throw writeException
                 }
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    contentValues.clear()
-                    contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
-                    resolver.update(uri, contentValues, null, null)
-                }
-                uri
             } else {
                 null
             }

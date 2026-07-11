@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,12 +44,13 @@ fun HistoryScreen(
     onItemSelect: (ScanEntity) -> Unit,
     onItemDelete: (ScanEntity) -> Unit,
     onClearAll: () -> Unit,
-    onExport: suspend (format: String) -> Uri?
+    onExport: suspend (format: String) -> Uri?,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-    var showExportMenu by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showExportMenu by rememberSaveable { mutableStateOf(false) }
 
     val dateFormat = remember { SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()) }
 
@@ -83,8 +85,7 @@ fun HistoryScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .navigationBarsPadding()
+            .padding(contentPadding)
             .padding(horizontal = 24.dp)
     ) {
         // Top Toolbar
@@ -347,10 +348,11 @@ private fun shareFile(context: android.content.Context, uri: Uri, mimeType: Stri
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = mimeType
             putExtra(Intent.EXTRA_STREAM, uri)
+            clipData = android.content.ClipData.newRawUri("", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(Intent.createChooser(intent, "Share History File"))
     } catch (e: Exception) {
-        Toast.makeText(context, "Failed to share history file", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.error_share_history), Toast.LENGTH_SHORT).show()
     }
 }

@@ -57,7 +57,7 @@ class SettingsDataStore(private val context: Context) {
             preferences[KEY_ONBOARDING_COMPLETE] ?: false
         }
 
-    val languageFlow: Flow<String> = context.dataStore.data
+    val languageFlow: Flow<String?> = context.dataStore.data
         .catch { exception ->
             if (exception is IOException) {
                 emit(emptyPreferences())
@@ -65,7 +65,7 @@ class SettingsDataStore(private val context: Context) {
                 throw exception
             }
         }.map { preferences ->
-            preferences[KEY_LANGUAGE] ?: "en"
+            preferences[KEY_LANGUAGE]
         }
 
     suspend fun setHapticEnabled(enabled: Boolean) {

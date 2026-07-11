@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">QuickQR</string>
+    
+    <!-- Header/Navigation -->
+    <string name="header_switch_camera">Kamera wechseln</string>
+    <string name="header_torch_on">Taschenlampe ausschalten</string>
+    <string name="header_torch_off">Taschenlampe einschalten</string>
+
+    
+    <!-- Navigation Tabs -->
+    <string name="nav_scan">Scannen</string>
+    <string name="nav_create">Erstellen</string>
+    <string name="nav_history">Verlauf</string>
+    <string name="nav_settings">Einstellungen</string>
+    
+    <!-- Scanner Screen -->
+    <string name="scan_empty_title">QR-Code scannen</string>
+
+    <string name="scan_result_title">Scan-Ergebnis</string>
+
+    <string name="scan_gallery">Galerie</string>
+    <string name="no_qr_found">Kein QR-Code im Bild gefunden</string>
+    
+    <!-- Result Types -->
+    <string name="type_url">URL</string>
+    <string name="type_wifi">WLAN</string>
+    <string name="type_email">E-Mail</string>
+    <string name="type_phone">Telefon</string>
+    <string name="type_geo">Standort</string>
+    <string name="type_sms">SMS</string>
+    <string name="type_vcard">Kontakt</string>
+    <string name="type_calendar">Ereignis</string>
+    <string name="type_text">Text</string>
+    
+    <!-- Actions -->
+    <string name="action_copy">Kopieren</string>
+    <string name="action_copy_all">Alle kopieren</string>
+    <string name="action_copy_password">Passwort kopieren</string>
+    <string name="action_open">Öffnen</string>
+    <string name="action_add_contact">Zu Kontakten hinzufügen</string>
+    <string name="action_add_calendar">Zum Kalender hinzufügen</string>
+    <string name="action_copied">In Zwischenablage kopiert ✓</string>
+
+    
+    <!-- Wi-Fi specific -->
+    <string name="wifi_network">Netzwerk</string>
+    <string name="wifi_security">Sicherheit</string>
+    <string name="wifi_password">Passwort</string>
+    <string name="wifi_hidden">Verstecktes Netzwerk</string>
+    <string name="wifi_show_password">Passwort anzeigen</string>
+    <string name="wifi_hide_password">Passwort ausblenden</string>
+    
+    <!-- History -->
+    <string name="history_title">Letzte Scans</string>
+    <string name="history_clear">Löschen</string>
+    <string name="history_clear_confirm_title">Verlauf löschen</string>
+    <string name="history_clear_confirm_message">Sind Sie sicher, dass Sie den gesamten Scanverlauf löschen möchten?</string>
+    <string name="history_clear_confirm_cancel">Abbrechen</string>
+    <string name="history_clear_confirm_confirm">Alle löschen</string>
+    <string name="history_search">Verlauf durchsuchen&#8230;</string>
+    <string name="history_empty">Keine Scans entsprechen Ihrer Suche</string>
+
+    <string name="history_export_json">Als JSON exportieren</string>
+    <string name="history_export_csv">Als CSV exportieren</string>
+
+    <string name="history_no_items">Noch kein Scanverlauf vorhanden</string>
+    
+    <!-- Generator -->
+    <string name="generator_title">QR-Code erstellen</string>
+    <string name="generator_input">Text oder URL eingeben</string>
+    <string name="generator_empty_subtitle">Geben Sie oben Text oder eine URL ein, um einen QR-Code zu erstellen</string>
+    <string name="generator_generate">Erstellen</string>
+    <string name="generator_save">Bild speichern</string>
+    <string name="generator_share">Teilen</string>
+
+    <string name="generator_saved">QR-Code gespeichert ✓</string>
+    <string name="generator_save_failed">QR-Code konnte nicht gespeichert werden</string>
+    
+    <!-- Permission -->
+    <string name="permission_title">Kameraberechtigung erforderlich</string>
+    <string name="permission_message">Bitte erlauben Sie den Kamerazugriff, um QR-Codes zu scannen. Möglicherweise müssen Sie ihn in den Geräteeinstellungen aktivieren.</string>
+    <string name="permission_retry">Erneut versuchen</string>
+
+    
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_haptic">Vibrationsfeedback</string>
+    <string name="settings_haptic_desc">Bei erfolgreichem Scan vibrieren</string>
+    <string name="settings_continuous">Kontinuierliches Scannen</string>
+    <string name="settings_continuous_desc">Scanner nach einem Scan automatisch fortsetzen</string>
+    <string name="settings_language">Sprache</string>
+
+    
+    <!-- Onboarding -->
+    <string name="onboarding_slide1_title">Schnell &amp; Privat</string>
+    <string name="onboarding_slide1_text">QuickQR verwendet Ihre Kamera nur zum Scannen. Es verlassen keine Daten Ihr Gerät.</string>
+    <string name="onboarding_slide2_title">Intelligente Erkennung</string>
+    <string name="onboarding_slide2_text">URLs, WLAN, Kontakte, E-Mails — automatisch erkannt und einsatzbereit.</string>
+    <string name="onboarding_slide3_title">Bereit zum Scannen</string>
+    <string name="onboarding_slide3_text">Richten Sie Ihre Kamera auf einen QR-Code, um zu beginnen.</string>
+    <string name="onboarding_next">Weiter</string>
+    <string name="onboarding_start">Loslegen</string>
+    <string name="onboarding_skip">Überspringen</string>
+    <string name="privacy_policy">Datenschutzerklärung</string>
+    <string name="error_open_action">Aktion konnte nicht geöffnet werden</string>
+    <string name="error_add_contact">Kontakt konnte nicht hinzugefügt werden</string>
+    <string name="error_add_event">Kalenderereignis konnte nicht hinzugefügt werden</string>
+    <string name="error_storage_permission">Speicherberechtigung ist zum Speichern des Bildes erforderlich</string>
+    <string name="error_share_history">Verlaufsdatei konnte nicht freigegeben werden</string>
+
+    <!-- vCard & Calendar details -->
+    <string name="vcard_organization">Organisation</string>
+    <string name="vcard_title">Berufsbezeichnung</string>
+    <string name="vcard_website">Website</string>
+    <string name="event_description">Beschreibung</string>
+    <string name="event_location">Ort</string>
+    <string name="event_start">Startzeit</string>
+    <string name="event_end">Endzeit</string>
+</resources>

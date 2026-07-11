@@ -1,16 +1,17 @@
-# Gradle files
+# Gradle files and build directories
 .gradle/
 build/
-app/build/
-.kotlin/
+/*/build/
+/build/
 
-# Local configuration files
+# Kotlin Gradle plugin data and caches
+.kotlin/
+.kotlin-gradle/
+
+# Local configuration (e.g. Android SDK path)
 local.properties
 
-# Log files
-*.log
-
-# Android Studio / IntelliJ IDEA files
+# IntelliJ IDEA / Android Studio
 .idea/
 *.iml
 *.ipr
@@ -20,25 +21,40 @@ captures/
 .externalNativeBuild/
 .cxx/
 
-# Device/Emulator files
-*.apk
-*.apks
-*.aab
-
-# Keystores & Signing files
+# Keystores and signing files
 *.jks
 *.keystore
 *.pepk
-keystore.properties
 
-# OS files
+# Compiled files and artifacts
+*.class
+*.apk
+*.ap_
+*.aab
+*.dex
+
+# Java Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Logs
+*.log
+hs_err_pid*
+replay_pid*
+
+# OS-specific files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# NDK/CMake build outputs
-obj/
+# Visual Studio Code
+.vscode/
+
+# Agentic / Workspace-specific directories
+brain/

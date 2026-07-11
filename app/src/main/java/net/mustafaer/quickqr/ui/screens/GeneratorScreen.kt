@@ -4,6 +4,8 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -31,6 +33,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
 import net.mustafaer.quickqr.R
 
@@ -41,18 +44,39 @@ fun GeneratorScreen(
     onTextChange: (String) -> Unit,
     onGenerate: () -> Unit,
     onSave: suspend () -> Uri?,
-    onShare: suspend () -> Uri?
+    onShare: suspend () -> Uri?,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
+    val savedMsg = stringResource(R.string.generator_saved)
+    val saveFailedMsg = stringResource(R.string.generator_save_failed)
+    val storagePermissionMsg = stringResource(R.string.error_storage_permission)
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                coroutineScope.launch {
+                    val uri = onSave()
+                    if (uri != null) {
+                        Toast.makeText(context, savedMsg, Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, saveFailedMsg, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                Toast.makeText(context, storagePermissionMsg, Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .navigationBarsPadding()
+            .padding(contentPadding)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
@@ -154,12 +178,18 @@ fun GeneratorScreen(
                         // Save to gallery
                         Button(
                             onClick = {
-                                coroutineScope.launch {
-                                    val uri = onSave()
-                                    if (uri != null) {
-                                        Toast.makeText(context, context.getString(R.string.generator_saved), Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        Toast.makeText(context, context.getString(R.string.generator_save_failed), Toast.LENGTH_SHORT).show()
+                                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q &&
+                                    ContextCompat.checkSelfPermission(context, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    permissionLauncher.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                } else {
+                                    coroutineScope.launch {
+                                        val uri = onSave()
+                                        if (uri != null) {
+                                            Toast.makeText(context, savedMsg, Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(context, saveFailedMsg, Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                                 }
                             },
@@ -190,6 +220,7 @@ fun GeneratorScreen(
                                         val intent = Intent(Intent.ACTION_SEND).apply {
                                             type = "image/png"
                                             putExtra(Intent.EXTRA_STREAM, shareUri)
+                                            clipData = android.content.ClipData.newRawUri("", shareUri)
                                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
                                         context.startActivity(Intent.createChooser(intent, "Share QR Code"))

@@ -46,8 +46,10 @@ fun OnboardingScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.End
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .height(48.dp),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             if (pagerState.currentPage < 2) {
                 TextButton(onClick = onComplete) {
@@ -57,8 +59,6 @@ fun OnboardingScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-            } else {
-                Spacer(modifier = Modifier.height(48.dp))
             }
         }
 

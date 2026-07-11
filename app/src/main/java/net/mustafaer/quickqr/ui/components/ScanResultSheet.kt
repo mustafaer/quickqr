@@ -5,6 +5,9 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
+import android.provider.CalendarContract
+import android.provider.ContactsContract
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import net.mustafaer.quickqr.R
 import net.mustafaer.quickqr.utils.ScanResultType
 import net.mustafaer.quickqr.utils.TypeDetector
+import java.text.SimpleDateFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,9 +45,13 @@ fun ScanResultSheet(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val actionCopiedMsg = stringResource(R.string.action_copied)
+    val errOpenActionMsg = stringResource(R.string.error_open_action)
+    val errAddContactMsg = stringResource(R.string.error_add_contact)
+    val errAddEventMsg = stringResource(R.string.error_add_event)
 
     // Wifi specific
-    var wifiShowPassword by remember { mutableStateOf(false) }
+    var wifiShowPassword by rememberSaveable { mutableStateOf(false) }
     val wifiData = remember(text, type) {
         if (type == ScanResultType.WIFI) TypeDetector.parseWifi(text) else null
     }
@@ -51,10 +60,52 @@ fun ScanResultSheet(
     val vcardName = remember(text, type) {
         if (type == ScanResultType.VCARD) TypeDetector.parseVCardName(text) else null
     }
+    val vcardPhone = remember(text, type) {
+        if (type == ScanResultType.VCARD) TypeDetector.parseVCardPhone(text) else null
+    }
+    val vcardEmail = remember(text, type) {
+        if (type == ScanResultType.VCARD) TypeDetector.parseVCardEmail(text) else null
+    }
+    val vcardOrg = remember(text, type) {
+        if (type == ScanResultType.VCARD) TypeDetector.parseVCardOrg(text) else null
+    }
+    val vcardTitle = remember(text, type) {
+        if (type == ScanResultType.VCARD) TypeDetector.parseVCardTitle(text) else null
+    }
+    val vcardWebsite = remember(text, type) {
+        if (type == ScanResultType.VCARD) TypeDetector.parseVCardWebsite(text) else null
+    }
 
     // Event specific
     val eventSummary = remember(text, type) {
         if (type == ScanResultType.CALENDAR) TypeDetector.parseEventSummary(text) else null
+    }
+    val eventDescription = remember(text, type) {
+        if (type == ScanResultType.CALENDAR) TypeDetector.parseEventDescription(text) else null
+    }
+    val eventLocation = remember(text, type) {
+        if (type == ScanResultType.CALENDAR) TypeDetector.parseEventLocation(text) else null
+    }
+    val eventStart = remember(text, type) {
+        if (type == ScanResultType.CALENDAR) TypeDetector.parseEventTime(text, "DTSTART") else null
+    }
+    val eventEnd = remember(text, type) {
+        if (type == ScanResultType.CALENDAR) TypeDetector.parseEventTime(text, "DTEND") else null
+    }
+    val eventDateTimeFormat = remember { SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale.getDefault()) }
+    val startStr = remember(eventStart) {
+        eventStart?.let { eventDateTimeFormat.format(java.util.Date(it)) }
+    }
+    val endStr = remember(eventEnd) {
+        eventEnd?.let { eventDateTimeFormat.format(java.util.Date(it)) }
+    }
+
+    val isAllDayEvent = remember(text, type) {
+        if (type == ScanResultType.CALENDAR) {
+            val dtstartRegex = "^DTSTART(?:;[^:]*)?:([\\d\\-]+)(?:T|$)".toRegex(setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE))
+            val match = dtstartRegex.find(text)
+            match != null && !match.value.contains("T", ignoreCase = true)
+        } else false
     }
 
     // Badge styling mapping
@@ -203,26 +254,43 @@ fun ScanResultSheet(
                                 text = vcardName ?: stringResource(R.string.type_vcard),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(bottom = 6.dp)
+                                modifier = Modifier.padding(bottom = 12.dp)
                             )
-                            Text(
-                                text = text,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            if (!vcardPhone.isNullOrEmpty()) {
+                                DetailRow(label = stringResource(R.string.type_phone), value = vcardPhone)
+                            }
+                            if (!vcardEmail.isNullOrEmpty()) {
+                                DetailRow(label = stringResource(R.string.type_email), value = vcardEmail)
+                            }
+                            if (!vcardOrg.isNullOrEmpty()) {
+                                DetailRow(label = stringResource(R.string.vcard_organization), value = vcardOrg)
+                            }
+                            if (!vcardTitle.isNullOrEmpty()) {
+                                DetailRow(label = stringResource(R.string.vcard_title), value = vcardTitle)
+                            }
+                            if (!vcardWebsite.isNullOrEmpty()) {
+                                DetailRow(label = stringResource(R.string.vcard_website), value = vcardWebsite)
+                            }
                         }
                         ScanResultType.CALENDAR -> {
                             Text(
                                 text = eventSummary ?: stringResource(R.string.type_calendar),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(bottom = 6.dp)
+                                modifier = Modifier.padding(bottom = 12.dp)
                             )
-                            Text(
-                                text = text,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            if (!eventDescription.isNullOrEmpty()) {
+                                DetailRow(label = stringResource(R.string.event_description), value = eventDescription)
+                            }
+                            if (!eventLocation.isNullOrEmpty()) {
+                                DetailRow(label = stringResource(R.string.event_location), value = eventLocation)
+                            }
+                            if (startStr != null) {
+                                DetailRow(label = stringResource(R.string.event_start), value = startStr)
+                            }
+                            if (endStr != null) {
+                                DetailRow(label = stringResource(R.string.event_end), value = endStr)
+                            }
                         }
                         else -> {
                             Text(
@@ -256,7 +324,7 @@ fun ScanResultSheet(
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip = ClipData.newPlainText("QuickQR Result", textToCopy)
                         clipboard.setPrimaryClip(clip)
-                        Toast.makeText(context, context.getString(R.string.action_copied), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, actionCopiedMsg, Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -291,7 +359,7 @@ fun ScanResultSheet(
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             val clip = ClipData.newPlainText("QuickQR Raw", text)
                             clipboard.setPrimaryClip(clip)
-                            Toast.makeText(context, context.getString(R.string.action_copied), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, actionCopiedMsg, Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -323,10 +391,40 @@ fun ScanResultSheet(
                 Button(
                     onClick = {
                         try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(actionUrl))
+                            val intent = when (type) {
+                                ScanResultType.PHONE -> Intent(Intent.ACTION_DIAL, actionUrl.toUri())
+                                ScanResultType.EMAIL -> {
+                                    val emailUri = actionUrl.toUri()
+                                    Intent(Intent.ACTION_SENDTO, emailUri).apply {
+                                        val subject = emailUri.getQueryParameter("subject")
+                                        val body = emailUri.getQueryParameter("body")
+                                        if (subject != null) {
+                                            putExtra(Intent.EXTRA_SUBJECT, subject)
+                                        }
+                                        if (body != null) {
+                                            putExtra(Intent.EXTRA_TEXT, body)
+                                        }
+                                    }
+                                }
+                                ScanResultType.SMS -> {
+                                    val smsUri = if (actionUrl.startsWith("sms:", ignoreCase = true)) {
+                                        val s = actionUrl.substring(4)
+                                        "smsto:$s".toUri()
+                                    } else {
+                                        actionUrl.toUri()
+                                    }
+                                    Intent(Intent.ACTION_SENDTO, smsUri).apply {
+                                        val body = smsUri.getQueryParameter("body")
+                                        if (body != null) {
+                                            putExtra("sms_body", body)
+                                        }
+                                    }
+                                }
+                                else -> Intent(Intent.ACTION_VIEW, actionUrl.toUri())
+                            }
                             context.startActivity(intent)
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Could not open action", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, errOpenActionMsg, Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier
@@ -354,6 +452,93 @@ fun ScanResultSheet(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.action_open), fontWeight = FontWeight.SemiBold)
                 }
+            } else if (type == ScanResultType.VCARD) {
+                Button(
+                    onClick = {
+                        try {
+                            val intent = Intent(Intent.ACTION_INSERT).apply {
+                                setType(ContactsContract.RawContacts.CONTENT_TYPE)
+                                putExtra(ContactsContract.Intents.Insert.NAME, vcardName ?: "")
+                                if (vcardPhone != null) {
+                                    putExtra(ContactsContract.Intents.Insert.PHONE, vcardPhone)
+                                }
+                                if (vcardEmail != null) {
+                                    putExtra(ContactsContract.Intents.Insert.EMAIL, vcardEmail)
+                                }
+                                if (vcardOrg != null) {
+                                    putExtra(ContactsContract.Intents.Insert.COMPANY, vcardOrg)
+                                }
+                                if (vcardTitle != null) {
+                                    putExtra(ContactsContract.Intents.Insert.JOB_TITLE, vcardTitle)
+                                }
+                            }
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, errAddContactMsg, Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.PersonAdd,
+                        contentDescription = stringResource(R.string.action_add_contact),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.action_add_contact), fontWeight = FontWeight.SemiBold)
+                }
+            } else if (type == ScanResultType.CALENDAR) {
+                Button(
+                    onClick = {
+                        try {
+                            val intent = Intent(Intent.ACTION_INSERT).apply {
+                                data = CalendarContract.Events.CONTENT_URI
+                                putExtra(CalendarContract.Events.TITLE, eventSummary ?: "New Event")
+                                if (eventDescription != null) {
+                                    putExtra(CalendarContract.Events.DESCRIPTION, eventDescription)
+                                }
+                                if (eventLocation != null) {
+                                    putExtra(CalendarContract.Events.EVENT_LOCATION, eventLocation)
+                                }
+                                if (eventStart != null) {
+                                    putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, eventStart)
+                                }
+                                if (eventEnd != null) {
+                                    putExtra(CalendarContract.EXTRA_EVENT_END_TIME, eventEnd)
+                                }
+                                if (isAllDayEvent) {
+                                    putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, true)
+                                }
+                            }
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, errAddEventMsg, Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.CalendarToday,
+                        contentDescription = stringResource(R.string.action_add_calendar),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.action_add_calendar), fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }
@@ -367,5 +552,27 @@ private fun isActionable(type: ScanResultType): Boolean {
         ScanResultType.SMS,
         ScanResultType.GEO -> true
         else -> false
+    }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = "$label: ",
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.width(100.dp)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
