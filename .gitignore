@@ -1,39 +1,16 @@
-# Gradle files and build directories
-.gradle/
-build/
-/*/build/
-/build/
-
-# Kotlin Gradle plugin data and caches
-.kotlin/
-.kotlin-gradle/
-
-# Local configuration (e.g. Android SDK path)
-local.properties
-
-# IntelliJ IDEA / Android Studio
-.idea/
-*.iml
-*.ipr
-*.iws
-.navigation/
-captures/
-.externalNativeBuild/
-.cxx/
-
-# Keystores and signing files
-*.jks
-*.keystore
-*.pepk
-
-# Compiled files and artifacts
+# Compiled class file
 *.class
-*.apk
-*.ap_
-*.aab
-*.dex
 
-# Java Package files
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
 *.jar
 *.war
 *.nar
@@ -42,19 +19,66 @@ captures/
 *.tar.gz
 *.rar
 
-# Logs
-*.log
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
 
-# OS-specific files
-.DS_Store
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Visual Studio Code
+# Kotlin Gradle plugin data, see https://kotlinlang.org/docs/whatsnew20.html#new-directory-for-kotlin-data-in-gradle-projects
+.kotlin/
 .vscode/
+.idea/
+.DS_Store
+
+# Gradle files
+.gradle/
+build/
+app/build/
+
+# Local configuration files
+local.properties
+
+# Android Studio / IntelliJ IDEA files
+*.iml
+*.ipr
+*.iws
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Device/Emulator files
+*.apk
+*.apks
+*.aab
+
+# Keystores & Signing files
+*.jks
+*.keystore
+*.pepk
+keystore.properties
+
+# OS files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# NDK/CMake build outputs
+obj/
+# Gradle files and build directories
+/*/build/
+/build/
+
+# Kotlin Gradle plugin data and caches
+.kotlin-gradle/
+
+# Compiled files and artifacts
+*.dex
+
+# OS-specific files
+Desktop.ini
 
 # Agentic / Workspace-specific directories
 brain/
