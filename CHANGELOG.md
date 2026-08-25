@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - **CI**: GitHub Actions runs unit tests, lint and an unsigned release build on every push and pull request.
 
 ### Fixed
-- **History search returned nothing** for any query containing `%`, `_` or `\`. Wildcards were escaped in Kotlin but the SQL `LIKE` had no `ESCAPE` clause, so the backslashes were matched literally. Search now runs in Kotlin, which also makes it case-insensitive in Turkish, German, Hindi and Arabic — SQLite's `LIKE` only folds ASCII case.
+- **History search returned nothing** for any query containing `%`, `_` or `\` — a regression shipped in 2.2.1. Wildcards were escaped in Kotlin but the SQL `LIKE` had no `ESCAPE` clause, so the backslashes were matched literally. Search now runs in Kotlin, which also makes it case-insensitive in Turkish, German, Hindi and Arabic — SQLite's `LIKE` only folds ASCII case.
 - **Backup and restore saved nothing.** Both backup rule files listed only `sharedpref`, but settings live in Preferences DataStore (`files/datastore/`) and history lives in the Room database. All three are now included.
 - **A schema change would have wiped every user's history.** The destructive migration fallback is gone and the schema is exported to `app/schemas/` so real migrations can be written against it.
 - **All-day events were never detected**: the check searched the whole regex match for a `T`, which the property name `DTSTART` always contains.
@@ -40,7 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - **A purple flash on cold start**: the window background was the brand colour and ignored dark mode. It now matches the Compose surface in both themes.
 - **The adaptive icon background was inset by 16.7%**, leaving transparent corners under a launcher's mask.
 - **Stale QR image**: a generation job cancelled mid-encode could still publish its result over a newer one.
-- **Double `ImageProxy.close()`** on the camera analysis failure path.
+- **Double `ImageProxy.close()`** on the camera analysis failure path, introduced in 2.2.1: `addOnCompleteListener` already covered failures.
 
 ### Changed
 - The scanner stays in the composition across tab switches, so returning to it no longer rebuilds the preview, the analysis executor and the ML Kit client — only the camera use cases unbind.
@@ -50,6 +50,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Turkish, German, Hindi and Arabic strings revised for terminology and consistency. `Wi-Fi`, `SMS` and `QR` are no longer transliterated in some strings and Latin in others; Arabic no longer uses `مسح` for both "scan" and "clear history".
 - Dependencies moved to a Gradle version catalog; the Compose BOM is declared once.
 - Debug builds carry a `.debug` application ID suffix so they install alongside the Play release.
+
+## [2.2.1] - 2026-07-21
+
+### Fixed
+- Pre-compiled the `TypeDetector` regex patterns instead of rebuilding them on every call.
+- Guaranteed disposal of the ML Kit barcode client after a gallery scan, and limited cached export files to a one-hour lifetime.
+- Added vertical scrolling to the Generator and Settings screens so the soft keyboard and small displays no longer cut content off.
+- Passed the SMS body as `EXTRA_TEXT` as well as `sms_body`, for apps that only read the former.
+- Fixed the onboarding page indicator reading the animation state without its delegate.
+
+### Known issues
+- Escaping `%` and `_` in the history search without an `ESCAPE` clause in the query made any search containing those characters return nothing. Fixed in 2.3.0.
+- The extra `addOnFailureListener` added to the camera analyser closed each failed frame twice. Fixed in 2.3.0.
 
 ## [2.0.0] - 2026-06-15
 
