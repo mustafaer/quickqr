@@ -84,11 +84,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val onboardingComplete = settingsDataStore.onboardingCompleteFlow
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /** The saved language, or the closest match to the device locale until one is saved. */
-    val language: StateFlow<AppLanguage> = settingsDataStore.languageFlow
-        .map { code -> code?.let(AppLanguage::fromCode) ?: AppLanguage.matchingSystemLocale() }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, AppLanguage.matchingSystemLocale())
-
     val themeMode = settingsDataStore.themeModeFlow
         .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.DEFAULT)
 
@@ -130,13 +125,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         get() = (_qrResult.value as? QrResult.Success)?.bitmap
 
     init {
-        // Re-apply the saved language and theme whenever they change, including on
-        // the first emission after process start.
-        viewModelScope.launch {
-            settingsDataStore.languageFlow.collect { code ->
-                if (code != null) applyLocale(code)
-            }
-        }
         viewModelScope.launch {
             settingsDataStore.themeModeFlow.collect { mode ->
                 if (AppCompatDelegate.getDefaultNightMode() != mode.nightMode) {
@@ -231,11 +219,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { settingsDataStore.setOnboardingComplete(complete) }
     }
 
+    /**
+     * Writes the choice straight to AppCompat, which persists it and is the same
+     * store the system's per-app language picker uses. Keeping a second copy in
+     * DataStore meant a language chosen in Android Settings was silently reverted
+     * on the next launch.
+     */
     fun setLanguage(language: AppLanguage) {
-        viewModelScope.launch {
-            settingsDataStore.setLanguage(language.code)
-            applyLocale(language.code)
-        }
+        applyLocale(language.code)
     }
 
     fun setThemeMode(mode: ThemeMode) {

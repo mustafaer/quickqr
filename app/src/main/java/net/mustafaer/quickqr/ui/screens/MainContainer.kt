@@ -19,11 +19,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.os.ConfigurationCompat
 import net.mustafaer.quickqr.R
+import net.mustafaer.quickqr.data.AppLanguage
 import net.mustafaer.quickqr.ui.components.ScanResultSheet
 import net.mustafaer.quickqr.ui.viewmodel.AppViewModel
+import java.util.Locale
 
 sealed class ScreenTab(val index: Int) {
     data object Scanner : ScreenTab(0)
@@ -48,7 +52,6 @@ fun MainContainer(
 
     val hapticEnabled by viewModel.hapticEnabled.collectAsStateWithLifecycle()
     val continuousMode by viewModel.continuousMode.collectAsStateWithLifecycle()
-    val language by viewModel.language.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val dynamicColor by viewModel.dynamicColor.collectAsStateWithLifecycle()
 
@@ -62,6 +65,16 @@ fun MainContainer(
 
     val generatorDraft by viewModel.generatorDraft.collectAsStateWithLifecycle()
     val qrResult by viewModel.qrResult.collectAsStateWithLifecycle()
+
+    // The effective language, read from the configuration rather than from app
+    // state — that way it is correct whether it was chosen in this app's picker
+    // or in Android Settings, and it updates without a restart.
+    val configuration = LocalConfiguration.current
+    val language = remember(configuration) {
+        AppLanguage.matchingSystemLocale(
+            ConfigurationCompat.getLocales(configuration)[0] ?: Locale.getDefault()
+        )
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val continuousScanLabel = stringResource(R.string.scan_saved_to_history)

@@ -477,32 +477,32 @@ private fun connectToWifi(
     if (wifiData == null || wifiData.ssid.isEmpty()) {
         return IllegalArgumentException("No network name in the scanned code")
     }
+
+    val security = WifiSecurity.fromQrValue(wifiData.security)
+    // WifiNetworkSuggestion cannot express a WEP key, so a WEP network takes the
+    // same manual route as pre-Android-11 devices: copy the password and open
+    // Wi-Fi settings. Reporting an error there would be wrong — nothing failed,
+    // the system simply has no one-tap path for it.
+    val canUseSystemDialog =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && security != WifiSecurity.WEP
+
     return runCatching {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (canUseSystemDialog) {
             val suggestion = WifiNetworkSuggestion.Builder()
                 .setSsid(wifiData.ssid)
                 .apply {
                     setIsHiddenSsid(wifiData.hidden)
-                    when (WifiSecurity.fromQrValue(wifiData.security)) {
-                        WifiSecurity.WPA -> if (wifiData.password.isNotEmpty()) {
-                            setWpa2Passphrase(wifiData.password)
-                        }
-                        WifiSecurity.WEP -> if (wifiData.password.isNotEmpty()) {
-                            // WEP has no builder support; fall through to settings.
-                            throw UnsupportedOperationException("WEP is not supported here")
-                        }
-                        WifiSecurity.NONE -> Unit
+                    if (security == WifiSecurity.WPA && wifiData.password.isNotEmpty()) {
+                        setWpa2Passphrase(wifiData.password)
                     }
                 }
                 .build()
 
-            val intent = Intent(Settings.ACTION_WIFI_ADD_NETWORKS).apply {
-                putExtra(
-                    Settings.EXTRA_WIFI_NETWORK_LIST,
-                    arrayListOf(suggestion)
-                )
-            }
-            context.startActivity(intent)
+            context.startActivity(
+                Intent(Settings.ACTION_WIFI_ADD_NETWORKS).apply {
+                    putExtra(Settings.EXTRA_WIFI_NETWORK_LIST, arrayListOf(suggestion))
+                }
+            )
         } else {
             onManualFallback()
             context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))

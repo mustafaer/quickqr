@@ -21,7 +21,6 @@ class SettingsDataStore(private val context: Context) {
         private val KEY_HAPTIC_ENABLED = booleanPreferencesKey("haptic_enabled")
         private val KEY_CONTINUOUS_MODE = booleanPreferencesKey("continuous_mode")
         private val KEY_ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
-        private val KEY_LANGUAGE = stringPreferencesKey("language")
         private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         private val KEY_DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
     }
@@ -44,9 +43,6 @@ class SettingsDataStore(private val context: Context) {
 
     val onboardingCompleteFlow: Flow<Boolean> = read { it[KEY_ONBOARDING_COMPLETE] ?: false }
 
-    /** Null until the user picks a language explicitly; the device locale wins until then. */
-    val languageFlow: Flow<String?> = read { it[KEY_LANGUAGE] }
-
     val themeModeFlow: Flow<ThemeMode> = read { ThemeMode.fromStorageKey(it[KEY_THEME_MODE]) }
 
     val dynamicColorFlow: Flow<Boolean> = read { it[KEY_DYNAMIC_COLOR] ?: false }
@@ -61,10 +57,6 @@ class SettingsDataStore(private val context: Context) {
 
     suspend fun setOnboardingComplete(complete: Boolean) {
         context.dataStore.edit { it[KEY_ONBOARDING_COMPLETE] = complete }
-    }
-
-    suspend fun setLanguage(language: String) {
-        context.dataStore.edit { it[KEY_LANGUAGE] = language }
     }
 
     suspend fun setThemeMode(mode: ThemeMode) {

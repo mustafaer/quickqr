@@ -20,9 +20,6 @@ interface ScanDao {
     @Delete
     suspend fun deleteScan(scan: ScanEntity): Int
 
-    @Query("DELETE FROM scans WHERE id = :id")
-    suspend fun deleteScanById(id: Int): Int
-
     @Query("DELETE FROM scans")
     suspend fun clearAllScans(): Int
 
