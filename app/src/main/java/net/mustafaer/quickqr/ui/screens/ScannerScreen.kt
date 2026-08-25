@@ -1,23 +1,24 @@
 package net.mustafaer.quickqr.ui.screens
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.widget.Toast
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
 import androidx.camera.core.FocusMeteringAction
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,43 +41,69 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.mustafaer.quickqr.R
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+
+/**
+ * Fraction of the analysis frame, measured from the centre, in which a barcode is
+ * accepted.
+ *
+ * The viewfinder draws a square at 70% of the view width, and a code the user
+ * lines up inside it must always scan — so the accepted region is deliberately
+ * wider than the drawn frame rather than matched to it. What it does rule out is
+ * a code sitting right at the edge of the frame, in the darkened area, being read
+ * and saved without the user ever having aimed at it.
+ */
+private const val SCAN_REGION_FRACTION = 0.85f
 
 @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
 @Composable
 fun ScannerScreen(
+    isActive: Boolean,
     isPaused: Boolean,
-    onCodeScanned: (String) -> Unit,
-    onGalleryScan: (Uri, onSuccess: (String) -> Unit, onFailure: () -> Unit) -> Unit,
+    onCodeScanned: (String, Boolean) -> Unit,
+    onGalleryScan: (Uri, () -> Unit) -> Unit,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val context = LocalContext.current
+    val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
     val noQrFoundMsg = stringResource(R.string.no_qr_found)
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var hasCameraPermission by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
         )
     }
-
+    // Set once the system dialog has been shown and dismissed without a grant and
+    // the OS will no longer show it — the point at which "Try again" is useless
+    // and the only way forward is the app's settings page.
+    var permissionPermanentlyDenied by remember { mutableStateOf(false) }
     var isLifecycleResumed by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
@@ -84,102 +111,80 @@ fun ScannerScreen(
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
                     isLifecycleResumed = true
-                    hasCameraPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+                    // Re-checked here so returning from the settings page picks up
+                    // a permission the user just granted.
+                    val granted = ContextCompat.checkSelfPermission(
+                        context, Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
+                    hasCameraPermission = granted
+                    if (granted) permissionPermanentlyDenied = false
                 }
-                Lifecycle.Event.ON_PAUSE -> {
-                    isLifecycleResumed = false
-                }
+                Lifecycle.Event.ON_PAUSE -> isLifecycleResumed = false
                 else -> {}
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { granted ->
-            hasCameraPermission = granted
-        }
-    )
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasCameraPermission = granted
+        permissionPermanentlyDenied = !granted && activity != null &&
+            !ActivityCompat.shouldShowRequestPermissionRationale(
+                activity, Manifest.permission.CAMERA
+            )
+    }
 
     LaunchedEffect(Unit) {
-        if (!hasCameraPermission) {
-            launcher.launch(Manifest.permission.CAMERA)
-        }
+        if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
+    val scope = rememberCoroutineScope()
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        if (uri != null) {
-            onGalleryScan(uri, { _ ->
-                // No toast needed here since the result sheet opens or a continuous scan toast shows
-            }, {
-                Toast.makeText(context, noQrFoundMsg, Toast.LENGTH_SHORT).show()
-            })
+        uri?.let { picked ->
+            // Only the failure path needs feedback: a successful gallery scan
+            // opens the result sheet, which is confirmation enough.
+            onGalleryScan(picked) {
+                scope.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(noQrFoundMsg)
+                }
+            }
         }
     }
 
-    if (!hasCameraPermission) {
-        // Permission Denied UI
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.FlipCameraAndroid,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.error
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (!hasCameraPermission) {
+            CameraPermissionPrompt(
+                permanentlyDenied = permissionPermanentlyDenied,
+                onRequest = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                onOpenSettings = {
+                    runCatching {
+                        context.startActivity(
+                            Intent(
+                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                "package:${context.packageName}".toUri()
+                            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
+                    }
+                }
             )
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = stringResource(R.string.permission_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.permission_message),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-            Button(
-                onClick = { launcher.launch(Manifest.permission.CAMERA) },
-                modifier = Modifier.height(50.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(stringResource(R.string.permission_retry))
-            }
-        }
-    } else {
-        // Scanner Camera View
-        Box(modifier = Modifier.fillMaxSize()) {
+        } else {
             var lensFacing by rememberSaveable { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
             var torchEnabled by rememberSaveable { mutableStateOf(false) }
             var cameraInstance by remember { mutableStateOf<Camera?>(null) }
-            var cameraProviderInstance by remember { mutableStateOf<ProcessCameraProvider?>(null) }
-            var imageAnalysisInstance by remember { mutableStateOf<ImageAnalysis?>(null) }
+            var hasFlashUnit by remember { mutableStateOf(false) }
             val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
             val barcodeScanner = remember { BarcodeScanning.getClient() }
-
-            // Track the PreviewView reference for rebinding
             val previewViewRef = remember { mutableStateOf<PreviewView?>(null) }
 
-            // Stable reference to isPaused for the analyzer callback
             val isPausedState = rememberUpdatedState(isPaused)
+            val onCodeScannedState = rememberUpdatedState(onCodeScanned)
 
-            // Camera preview
             AndroidView(
                 factory = { ctx ->
                     PreviewView(ctx).apply {
@@ -193,42 +198,40 @@ fun ScannerScreen(
                         detectTapGestures { offset ->
                             val camera = cameraInstance ?: return@detectTapGestures
                             val previewView = previewViewRef.value ?: return@detectTapGestures
-                            val factory = previewView.meteringPointFactory
-                            val point = factory.createPoint(offset.x, offset.y)
-                            val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
-                                .setAutoCancelDuration(3, java.util.concurrent.TimeUnit.SECONDS)
+                            val point = previewView.meteringPointFactory
+                                .createPoint(offset.x, offset.y)
+                            val action = FocusMeteringAction
+                                .Builder(point, FocusMeteringAction.FLAG_AF)
+                                .setAutoCancelDuration(3, TimeUnit.SECONDS)
                                 .build()
-                            camera.cameraControl.startFocusAndMetering(action)
+                            runCatching { camera.cameraControl.startFocusAndMetering(action) }
                         }
                     }
             )
 
-            // Bind camera whenever lensFacing, previewView, context, lifecycleOwner or lifecycle state changes
-            LaunchedEffect(lensFacing, previewViewRef.value, context, lifecycleOwner, isLifecycleResumed) {
-                if (!isLifecycleResumed) return@LaunchedEffect
+            // Binding is keyed on `isActive` so the camera releases while the user
+            // is on another tab, while this composable — and with it the
+            // PreviewView, the executor and the ML Kit client — stays alive.
+            LaunchedEffect(lensFacing, previewViewRef.value, isActive, isLifecycleResumed) {
+                if (!isActive || !isLifecycleResumed) return@LaunchedEffect
                 val previewView = previewViewRef.value ?: return@LaunchedEffect
+
                 var cameraProvider: ProcessCameraProvider? = null
                 var imageAnalysis: ImageAnalysis? = null
                 try {
-                    cameraProvider = suspendCancellableCoroutine<ProcessCameraProvider> { continuation ->
+                    val provider: ProcessCameraProvider = suspendCancellableCoroutine { continuation ->
                         val future = ProcessCameraProvider.getInstance(context)
-                        continuation.invokeOnCancellation {
-                            future.cancel(true)
-                        }
+                        continuation.invokeOnCancellation { future.cancel(true) }
                         future.addListener({
                             try {
-                                if (continuation.isActive) {
-                                    continuation.resume(future.get())
-                                }
+                                if (continuation.isActive) continuation.resume(future.get())
                             } catch (e: Exception) {
-                                if (continuation.isActive) {
-                                    continuation.resumeWithException(e)
-                                }
+                                if (continuation.isActive) continuation.resumeWithException(e)
                             }
                         }, ContextCompat.getMainExecutor(context))
                     }
-                    cameraProviderInstance = cameraProvider
-                    cameraProvider.unbindAll()
+                    cameraProvider = provider
+                    provider.unbindAll()
 
                     val preview = Preview.Builder().build().also {
                         it.surfaceProvider = previewView.surfaceProvider
@@ -237,35 +240,14 @@ fun ScannerScreen(
                     imageAnalysis = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
-                        .also {
-                            it.setAnalyzer(cameraExecutor) { imageProxy ->
-                                if (!isPausedState.value) {
-                                    val mediaImage = imageProxy.image
-                                    if (mediaImage != null) {
-                                        try {
-                                            val image = InputImage.fromMediaImage(
-                                                mediaImage,
-                                                imageProxy.imageInfo.rotationDegrees
-                                            )
-                                            barcodeScanner.process(image)
-                                                .addOnSuccessListener { barcodes ->
-                                                    barcodes.firstOrNull()?.rawValue?.let { code ->
-                                                        onCodeScanned(code)
-                                                    }
-                                                }
-                                                .addOnCompleteListener {
-                                                    imageProxy.close()
-                                                }
-                                        } catch (e: Exception) {
-                                            e.printStackTrace()
-                                            imageProxy.close()
-                                        }
-                                    } else {
-                                        imageProxy.close()
-                                    }
-                                } else {
-                                    imageProxy.close()
-                                }
+                        .also { analysis ->
+                            analysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                                analyzeFrame(
+                                    imageProxy = imageProxy,
+                                    isPaused = isPausedState.value,
+                                    scanner = barcodeScanner,
+                                    onCode = { code -> onCodeScannedState.value(code, false) }
+                                )
                             }
                         }
 
@@ -273,65 +255,46 @@ fun ScannerScreen(
                         .requireLensFacing(lensFacing)
                         .build()
 
-                    val boundCamera = cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        imageAnalysis
+                    val boundCamera = provider.bindToLifecycle(
+                        lifecycleOwner, cameraSelector, preview, imageAnalysis
                     )
                     cameraInstance = boundCamera
-                    imageAnalysisInstance = imageAnalysis
-                    boundCamera.cameraControl.enableTorch(torchEnabled)
+                    hasFlashUnit = boundCamera.cameraInfo.hasFlashUnit()
+                    if (hasFlashUnit) {
+                        runCatching { boundCamera.cameraControl.enableTorch(torchEnabled) }
+                    }
 
                     awaitCancellation()
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                } catch (_: Exception) {
+                    // A camera that will not open leaves the preview blank; there
+                    // is nothing actionable to tell the user beyond that.
                 } finally {
                     cameraInstance = null
-                    imageAnalysisInstance = null
-                    try {
-                        imageAnalysis?.clearAnalyzer()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                    try {
-                        cameraProvider?.unbindAll()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                    runCatching { imageAnalysis?.clearAnalyzer() }
+                    runCatching { cameraProvider?.unbindAll() }
                 }
             }
 
-            // Watch Torch toggle
             LaunchedEffect(torchEnabled, cameraInstance) {
-                cameraInstance?.cameraControl?.enableTorch(torchEnabled)
+                val camera = cameraInstance ?: return@LaunchedEffect
+                if (hasFlashUnit) runCatching { camera.cameraControl.enableTorch(torchEnabled) }
             }
 
-            // Cleanup executor and unbind camera when composable leaves composition
             DisposableEffect(Unit) {
                 onDispose {
-                    cameraExecutor.execute {
-                        try {
-                            barcodeScanner.close()
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
+                    cameraExecutor.execute { runCatching { barcodeScanner.close() } }
                     cameraExecutor.shutdown()
                 }
             }
 
-            // Scanner HUD overlay
             ScannerHudOverlay()
 
-            // Toolbar Controls overlay
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Top controls
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -354,71 +317,181 @@ fun ScannerScreen(
                     }
                 }
 
-                // Bottom controls (Flash, Gallery, Switch Camera)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp, vertical = 24.dp)
-                        .background(Color.Transparent),
+                        .padding(horizontal = 32.dp, vertical = 24.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Flash Toggle
-                    IconButton(
+                    ScannerControl(
                         onClick = { torchEnabled = !torchEnabled },
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.6f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Lightbulb,
-                            contentDescription = stringResource(if (torchEnabled) R.string.header_torch_on else R.string.header_torch_off),
-                            tint = if (torchEnabled) Color(0xFFFFD54F) else Color.White,
-                            modifier = Modifier.size(24.dp)
+                        enabled = hasFlashUnit,
+                        size = 56.dp,
+                        icon = Icons.Outlined.Lightbulb,
+                        iconSize = 24.dp,
+                        tint = if (torchEnabled) Color(0xFFFFD54F) else Color.White,
+                        contentDescription = stringResource(
+                            if (torchEnabled) R.string.header_torch_on else R.string.header_torch_off
                         )
-                    }
+                    )
 
-                    // Gallery scan button
-                    IconButton(
+                    ScannerControl(
                         onClick = { galleryLauncher.launch("image/*") },
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.6f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.PhotoLibrary,
-                            contentDescription = stringResource(R.string.scan_gallery),
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
+                        size = 64.dp,
+                        icon = Icons.Outlined.PhotoLibrary,
+                        iconSize = 28.dp,
+                        contentDescription = stringResource(R.string.scan_gallery)
+                    )
 
-                    // Camera switcher
-                    IconButton(
+                    ScannerControl(
                         onClick = {
                             lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
                                 CameraSelector.LENS_FACING_FRONT
                             } else {
                                 CameraSelector.LENS_FACING_BACK
                             }
-                            torchEnabled = false // Reset torch on switch
+                            torchEnabled = false
                         },
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.6f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.FlipCameraAndroid,
-                            contentDescription = stringResource(R.string.header_switch_camera),
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                        size = 56.dp,
+                        icon = Icons.Outlined.FlipCameraAndroid,
+                        iconSize = 24.dp,
+                        contentDescription = stringResource(R.string.header_switch_camera)
+                    )
                 }
             }
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(contentPadding)
+                .padding(bottom = 88.dp)
+        )
+    }
+}
+
+/**
+ * Hands one camera frame to ML Kit and closes it exactly once.
+ *
+ * `addOnCompleteListener` fires for success *and* failure, so it is the only
+ * place the proxy is released — adding a failure listener that also closed it
+ * would double-close every failed frame.
+ */
+@androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
+private fun analyzeFrame(
+    imageProxy: ImageProxy,
+    isPaused: Boolean,
+    scanner: BarcodeScanner,
+    onCode: (String) -> Unit
+) {
+    val mediaImage = imageProxy.image
+    if (isPaused || mediaImage == null) {
+        imageProxy.close()
+        return
+    }
+    try {
+        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+        scanner.process(image)
+            .addOnSuccessListener { barcodes ->
+                barcodes.firstOrNull { it.isWithinScanRegion(imageProxy.width, imageProxy.height) }
+                    ?.rawValue
+                    ?.let(onCode)
+            }
+            .addOnCompleteListener { imageProxy.close() }
+    } catch (_: Exception) {
+        imageProxy.close()
+    }
+}
+
+/** True when the barcode's centre sits inside the accepted central region. */
+private fun Barcode.isWithinScanRegion(imageWidth: Int, imageHeight: Int): Boolean {
+    val box = boundingBox ?: return true
+    val marginX = imageWidth * (1f - SCAN_REGION_FRACTION) / 2f
+    val marginY = imageHeight * (1f - SCAN_REGION_FRACTION) / 2f
+    val centerX = box.exactCenterX()
+    val centerY = box.exactCenterY()
+    return centerX in marginX..(imageWidth - marginX) &&
+        centerY in marginY..(imageHeight - marginY)
+}
+
+@Composable
+private fun ScannerControl(
+    onClick: () -> Unit,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+    size: androidx.compose.ui.unit.Dp,
+    iconSize: androidx.compose.ui.unit.Dp,
+    enabled: Boolean = true,
+    tint: Color = Color.White
+) {
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.6f))
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = if (enabled) tint else tint.copy(alpha = 0.35f),
+            modifier = Modifier.size(iconSize)
+        )
+    }
+}
+
+@Composable
+private fun CameraPermissionPrompt(
+    permanentlyDenied: Boolean,
+    onRequest: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.FlipCameraAndroid,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.error
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = stringResource(R.string.permission_title),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(
+                if (permanentlyDenied) R.string.permission_message_denied
+                else R.string.permission_message
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = if (permanentlyDenied) onOpenSettings else onRequest,
+            modifier = Modifier.height(50.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(
+                stringResource(
+                    if (permanentlyDenied) R.string.permission_open_settings
+                    else R.string.permission_retry
+                )
+            )
         }
     }
 }
@@ -443,9 +516,8 @@ fun ScannerHudOverlay() {
                 val width = size.width
                 val height = size.height
 
-                // Calculate scanning viewport box dimensions
-                val boxWidth = size.width * 0.70f
-                val boxHeight = boxWidth // Square box
+                val boxWidth = width * 0.70f
+                val boxHeight = boxWidth
                 val left = (width - boxWidth) / 2
                 val top = (height - boxHeight) / 2.3f
                 val right = left + boxWidth
@@ -455,6 +527,7 @@ fun ScannerHudOverlay() {
                 val borderThickness = 4.dp.toPx()
                 val cornerLength = 24.dp.toPx()
                 val cornerColor = Color(0xFFB4A5FF)
+                val lineInset = 8.dp.toPx()
 
                 val rectPath = Path().apply {
                     addRoundRect(
@@ -466,7 +539,6 @@ fun ScannerHudOverlay() {
                 }
 
                 onDrawBehind {
-                    // Draw semi-transparent overlay everywhere except inside the box
                     clipPath(rectPath, clipOp = androidx.compose.ui.graphics.ClipOp.Difference) {
                         drawRect(
                             color = Color.Black.copy(alpha = 0.65f),
@@ -474,61 +546,27 @@ fun ScannerHudOverlay() {
                         )
                     }
 
-                    // Draw HUD square frame corners
-                    // Top-left
-                    drawRect(
-                        color = cornerColor,
-                        topLeft = Offset(left, top),
-                        size = Size(cornerLength, borderThickness)
-                    )
-                    drawRect(
-                        color = cornerColor,
-                        topLeft = Offset(left, top),
-                        size = Size(borderThickness, cornerLength)
-                    )
+                    // Four L-shaped corner brackets.
+                    listOf(
+                        Offset(left, top) to Size(cornerLength, borderThickness),
+                        Offset(left, top) to Size(borderThickness, cornerLength),
+                        Offset(right - cornerLength, top) to Size(cornerLength, borderThickness),
+                        Offset(right - borderThickness, top) to Size(borderThickness, cornerLength),
+                        Offset(left, bottom - borderThickness) to Size(cornerLength, borderThickness),
+                        Offset(left, bottom - cornerLength) to Size(borderThickness, cornerLength),
+                        Offset(right - cornerLength, bottom - borderThickness) to
+                            Size(cornerLength, borderThickness),
+                        Offset(right - borderThickness, bottom - cornerLength) to
+                            Size(borderThickness, cornerLength)
+                    ).forEach { (topLeft, rectSize) ->
+                        drawRect(color = cornerColor, topLeft = topLeft, size = rectSize)
+                    }
 
-                    // Top-right
-                    drawRect(
-                        color = cornerColor,
-                        topLeft = Offset(right - cornerLength, top),
-                        size = Size(cornerLength, borderThickness)
-                    )
-                    drawRect(
-                        color = cornerColor,
-                        topLeft = Offset(right - borderThickness, top),
-                        size = Size(borderThickness, cornerLength)
-                    )
-
-                    // Bottom-left
-                    drawRect(
-                        color = cornerColor,
-                        topLeft = Offset(left, bottom - borderThickness),
-                        size = Size(cornerLength, borderThickness)
-                    )
-                    drawRect(
-                        color = cornerColor,
-                        topLeft = Offset(left, bottom - cornerLength),
-                        size = Size(borderThickness, cornerLength)
-                    )
-
-                    // Bottom-right
-                    drawRect(
-                        color = cornerColor,
-                        topLeft = Offset(right - cornerLength, bottom - borderThickness),
-                        size = Size(cornerLength, borderThickness)
-                    )
-                    drawRect(
-                        color = cornerColor,
-                        topLeft = Offset(right - borderThickness, bottom - cornerLength),
-                        size = Size(borderThickness, cornerLength)
-                    )
-
-                    // Animated scan line inside viewport
                     val lineY = top + (boxHeight * animatedLineY)
                     drawLine(
                         color = Color(0xFFFF5252),
-                        start = Offset(left + 8.dp.toPx(), lineY),
-                        end = Offset(right - 8.dp.toPx(), lineY),
+                        start = Offset(left + lineInset, lineY),
+                        end = Offset(right - lineInset, lineY),
                         strokeWidth = 2.5.dp.toPx()
                     )
                 }

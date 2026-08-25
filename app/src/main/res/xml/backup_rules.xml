@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
    Full backup content rules for pre-Android 12 (API < 31).
-   Include only user settings; exclude everything else by default.
+
+   Settings live in Preferences DataStore, which writes to files/datastore/ —
+   not to SharedPreferences. The sharedpref domain is still included because
+   AppCompat stores the per-app language there below API 33.
+
+   Listing <include> elements is itself the exclusion: anything not named here
+   is left out of the backup.
 -->
 <full-backup-content>
+    <include domain="file" path="datastore" />
     <include domain="sharedpref" path="." />
+    <include domain="database" path="quickqr_database" />
 </full-backup-content>

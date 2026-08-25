@@ -14,9 +14,6 @@ interface ScanDao {
     @Query("SELECT * FROM scans ORDER BY timestamp DESC")
     fun getAllScans(): Flow<List<ScanEntity>>
 
-    @Query("SELECT * FROM scans WHERE text LIKE :searchQuery OR type LIKE :searchQuery ORDER BY timestamp DESC")
-    fun searchScans(searchQuery: String): Flow<List<ScanEntity>>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertScan(scan: ScanEntity): Long
 
@@ -49,4 +46,3 @@ interface ScanDao {
         return id
     }
 }
-

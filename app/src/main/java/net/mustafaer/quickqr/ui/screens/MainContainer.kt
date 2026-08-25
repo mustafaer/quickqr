@@ -7,9 +7,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.QrCode
@@ -37,17 +37,20 @@ fun MainContainer(
     viewModel: AppViewModel
 ) {
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
-    val selectedTab = when (selectedTabIndex) {
-        0 -> ScreenTab.Scanner
-        1 -> ScreenTab.Generator
-        2 -> ScreenTab.History
-        3 -> ScreenTab.Settings
-        else -> ScreenTab.Scanner
+    val selectedTab = remember(selectedTabIndex) {
+        when (selectedTabIndex) {
+            1 -> ScreenTab.Generator
+            2 -> ScreenTab.History
+            3 -> ScreenTab.Settings
+            else -> ScreenTab.Scanner
+        }
     }
 
     val hapticEnabled by viewModel.hapticEnabled.collectAsStateWithLifecycle()
     val continuousMode by viewModel.continuousMode.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val dynamicColor by viewModel.dynamicColor.collectAsStateWithLifecycle()
 
     val historyItems by viewModel.historyItems.collectAsStateWithLifecycle()
     val searchQuery by viewModel.historySearchQuery.collectAsStateWithLifecycle()
@@ -55,15 +58,26 @@ fun MainContainer(
     val scannedResult by viewModel.scannedResult.collectAsStateWithLifecycle()
     val scannedType by viewModel.scannedType.collectAsStateWithLifecycle()
     val isScannerPaused by viewModel.isScannerPaused.collectAsStateWithLifecycle()
+    val lastContinuousScan by viewModel.lastContinuousScan.collectAsStateWithLifecycle()
 
-    val generatorText by viewModel.generatorText.collectAsStateWithLifecycle()
-    val generatedQrBitmap by viewModel.generatedQrBitmap.collectAsStateWithLifecycle()
+    val generatorDraft by viewModel.generatorDraft.collectAsStateWithLifecycle()
+    val qrResult by viewModel.qrResult.collectAsStateWithLifecycle()
 
-    val resolvedLanguage = remember(language) {
-        language ?: run {
-            val sysLang = java.util.Locale.getDefault().language
-            if (sysLang in listOf("en", "tr", "hi", "ar", "de")) sysLang else "en"
-        }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val continuousScanLabel = stringResource(R.string.scan_saved_to_history)
+
+    // Continuous mode has no result sheet, so this is the only confirmation the
+    // user gets. A snackbar keeps it inside the app's language and theme, which a
+    // raw Toast did not.
+    LaunchedEffect(lastContinuousScan) {
+        val scan = lastContinuousScan ?: return@LaunchedEffect
+        val preview = if (scan.text.length > 40) scan.text.take(40) + "…" else scan.text
+        viewModel.consumeContinuousScan()
+        snackbarHostState.currentSnackbarData?.dismiss()
+        snackbarHostState.showSnackbar(
+            message = "$continuousScanLabel: $preview",
+            duration = SnackbarDuration.Short
+        )
     }
 
     BackHandler(enabled = selectedTabIndex != 0 && scannedResult == null) {
@@ -71,36 +85,30 @@ fun MainContainer(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.onSurface
             ) {
-                // Scanner Tab
                 NavigationBarItem(
                     selected = selectedTab == ScreenTab.Scanner,
                     onClick = { selectedTabIndex = 0 },
                     icon = { Icon(Icons.Outlined.QrCodeScanner, contentDescription = null) },
                     label = { Text(stringResource(R.string.nav_scan)) }
                 )
-
-                // Generator Tab
                 NavigationBarItem(
                     selected = selectedTab == ScreenTab.Generator,
                     onClick = { selectedTabIndex = 1 },
                     icon = { Icon(Icons.Outlined.QrCode, contentDescription = null) },
                     label = { Text(stringResource(R.string.nav_create)) }
                 )
-
-                // History Tab
                 NavigationBarItem(
                     selected = selectedTab == ScreenTab.History,
                     onClick = { selectedTabIndex = 2 },
                     icon = { Icon(Icons.Outlined.History, contentDescription = null) },
                     label = { Text(stringResource(R.string.nav_history)) }
                 )
-
-                // Settings Tab
                 NavigationBarItem(
                     selected = selectedTab == ScreenTab.Settings,
                     onClick = { selectedTabIndex = 3 },
@@ -110,64 +118,88 @@ fun MainContainer(
             }
         }
     ) { innerPadding ->
-        AnimatedContent(
-            targetState = selectedTab,
-            transitionSpec = {
-                if (targetState.index > initialState.index) {
-                    (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
-                        slideOutHorizontally { width -> -width } + fadeOut()
-                    )
-                } else {
-                    (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
-                        slideOutHorizontally { width -> width } + fadeOut()
-                    )
-                }
-            },
-            label = "tabTransition",
-            modifier = Modifier.fillMaxSize()
-        ) { targetTab ->
-            when (targetTab) {
-                ScreenTab.Scanner -> {
-                    ScannerScreen(
-                        isPaused = isScannerPaused,
-                        onCodeScanned = { code -> viewModel.onCodeScanned(code) },
-                        onGalleryScan = { uri, onSuccess, onFailure ->
-                            viewModel.scanFromGallery(uri, onSuccess, onFailure)
-                        },
+        Box(modifier = Modifier.fillMaxSize()) {
+            // The scanner stays in the composition for the whole session. Leaving
+            // the tab used to tear down the PreviewView, the analysis executor and
+            // the ML Kit client and rebuild all of them on the way back; now only
+            // the camera use cases unbind, so returning to the tab is instant and
+            // the camera still releases while the user is elsewhere.
+            ScannerScreen(
+                isActive = selectedTab == ScreenTab.Scanner,
+                isPaused = isScannerPaused,
+                onCodeScanned = viewModel::onCodeScanned,
+                onGalleryScan = viewModel::scanFromGallery,
+                contentPadding = innerPadding
+            )
+
+            // Opaque scrim over the live camera. Without it, the gap between the
+            // outgoing and incoming panels during a tab slide briefly exposes the
+            // scanner underneath — even when neither tab is the scanner.
+            androidx.compose.animation.AnimatedVisibility(
+                visible = selectedTab != ScreenTab.Scanner,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
+                )
+            }
+
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    if (targetState.index > initialState.index) {
+                        (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
+                            slideOutHorizontally { width -> -width } + fadeOut()
+                        )
+                    } else {
+                        (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
+                            slideOutHorizontally { width -> width } + fadeOut()
+                        )
+                    }
+                },
+                label = "tabTransition",
+                modifier = Modifier.fillMaxSize()
+            ) { targetTab ->
+                when (targetTab) {
+                    // Transparent: the live scanner underneath is the Scanner tab.
+                    ScreenTab.Scanner -> Box(modifier = Modifier.fillMaxSize())
+
+                    ScreenTab.Generator -> GeneratorScreen(
+                        draft = generatorDraft,
+                        result = qrResult,
+                        onDraftChange = viewModel::updateGeneratorDraft,
+                        onGenerate = viewModel::generateQrCode,
+                        onClear = viewModel::clearGenerator,
+                        onSave = viewModel::saveQrCodeToGallery,
+                        onShare = viewModel::getQrCodeShareUri,
                         contentPadding = innerPadding
                     )
-                }
-                ScreenTab.Generator -> {
-                    GeneratorScreen(
-                        text = generatorText,
-                        qrBitmap = generatedQrBitmap,
-                        onTextChange = { txt -> viewModel.updateGeneratorText(txt) },
-                        onGenerate = { viewModel.generateQrCode() },
-                        onSave = { viewModel.saveQrCodeToGallery() },
-                        onShare = { viewModel.getQrCodeShareUri() },
-                        contentPadding = innerPadding
-                    )
-                }
-                ScreenTab.History -> {
-                    HistoryScreen(
+
+                    ScreenTab.History -> HistoryScreen(
                         historyList = historyItems,
                         searchQuery = searchQuery,
-                        onSearchQueryChange = { query -> viewModel.updateHistorySearchQuery(query) },
-                        onItemSelect = { item -> viewModel.selectHistoryItem(item) },
-                        onItemDelete = { item -> viewModel.deleteHistoryItem(item) },
-                        onClearAll = { viewModel.clearAllHistory() },
-                        onExport = { format -> viewModel.getExportFileUri(format) },
+                        onSearchQueryChange = viewModel::updateHistorySearchQuery,
+                        onItemSelect = viewModel::selectHistoryItem,
+                        onItemDelete = viewModel::deleteHistoryItem,
+                        onClearAll = viewModel::clearAllHistory,
+                        onExport = viewModel::getExportFileUri,
                         contentPadding = innerPadding
                     )
-                }
-                ScreenTab.Settings -> {
-                    SettingsScreen(
+
+                    ScreenTab.Settings -> SettingsScreen(
                         hapticEnabled = hapticEnabled,
                         continuousMode = continuousMode,
-                        language = resolvedLanguage,
-                        onHapticToggle = { enabled -> viewModel.setHapticEnabled(enabled) },
-                        onContinuousToggle = { enabled -> viewModel.setContinuousMode(enabled) },
-                        onLanguageSelect = { lang -> viewModel.setLanguage(lang) },
+                        language = language,
+                        themeMode = themeMode,
+                        dynamicColor = dynamicColor,
+                        onHapticToggle = viewModel::setHapticEnabled,
+                        onContinuousToggle = viewModel::setContinuousMode,
+                        onLanguageSelect = viewModel::setLanguage,
+                        onThemeModeSelect = viewModel::setThemeMode,
+                        onDynamicColorToggle = viewModel::setDynamicColor,
                         contentPadding = innerPadding
                     )
                 }
@@ -175,12 +207,11 @@ fun MainContainer(
         }
     }
 
-    // Modal bottom sheet overlays for scan results
-    if (scannedResult != null) {
+    scannedResult?.let { result ->
         ScanResultSheet(
-            text = scannedResult!!,
+            text = result,
             type = scannedType,
-            onDismiss = { viewModel.resumeScanner() }
+            onDismiss = viewModel::resumeScanner
         )
     }
 }

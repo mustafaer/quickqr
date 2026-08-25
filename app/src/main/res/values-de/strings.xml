@@ -1,120 +1,159 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">QuickQR</string>
-    
-    <!-- Header/Navigation -->
+
+    <!-- Scanner-Steuerung -->
     <string name="header_switch_camera">Kamera wechseln</string>
     <string name="header_torch_on">Taschenlampe ausschalten</string>
     <string name="header_torch_off">Taschenlampe einschalten</string>
 
-    
-    <!-- Navigation Tabs -->
+    <!-- Navigation -->
     <string name="nav_scan">Scannen</string>
     <string name="nav_create">Erstellen</string>
     <string name="nav_history">Verlauf</string>
     <string name="nav_settings">Einstellungen</string>
-    
-    <!-- Scanner Screen -->
+
+    <!-- Scanner -->
     <string name="scan_empty_title">QR-Code scannen</string>
-
     <string name="scan_result_title">Scan-Ergebnis</string>
-
     <string name="scan_gallery">Galerie</string>
-    <string name="no_qr_found">Kein QR-Code im Bild gefunden</string>
-    
-    <!-- Result Types -->
-    <string name="type_url">URL</string>
-    <string name="type_wifi">WLAN</string>
+    <string name="no_qr_found">In diesem Bild wurde kein QR-Code gefunden</string>
+    <string name="scan_saved_to_history">Gespeichert</string>
+    <string name="scan_share_title">Scan-Ergebnis teilen</string>
+
+    <!-- Ergebnistypen -->
+    <string name="type_url">Link</string>
     <string name="type_email">E-Mail</string>
     <string name="type_phone">Telefon</string>
     <string name="type_geo">Standort</string>
-    <string name="type_sms">SMS</string>
     <string name="type_vcard">Kontakt</string>
-    <string name="type_calendar">Ereignis</string>
+    <string name="type_calendar">Termin</string>
     <string name="type_text">Text</string>
-    
-    <!-- Actions -->
+
+    <!-- Aktionen -->
     <string name="action_copy">Kopieren</string>
-    <string name="action_copy_all">Alle kopieren</string>
+    <string name="action_copy_all">Alles kopieren</string>
     <string name="action_copy_password">Passwort kopieren</string>
+    <string name="action_share">Teilen</string>
     <string name="action_open">Öffnen</string>
+    <string name="action_connect_wifi">Mit Netzwerk verbinden</string>
     <string name="action_add_contact">Zu Kontakten hinzufügen</string>
     <string name="action_add_calendar">Zum Kalender hinzufügen</string>
-    <string name="action_copied">In Zwischenablage kopiert ✓</string>
+    <string name="action_copied">In die Zwischenablage kopiert</string>
 
-    
-    <!-- Wi-Fi specific -->
+    <!-- WLAN -->
     <string name="wifi_network">Netzwerk</string>
     <string name="wifi_security">Sicherheit</string>
     <string name="wifi_password">Passwort</string>
-    <string name="wifi_hidden">Verstecktes Netzwerk</string>
+    <string name="wifi_hidden">Verborgenes Netzwerk</string>
     <string name="wifi_show_password">Passwort anzeigen</string>
     <string name="wifi_hide_password">Passwort ausblenden</string>
-    
-    <!-- History -->
+    <string name="wifi_security_open">Offen</string>
+    <string name="wifi_connect_manual">Passwort kopiert. Netzwerk in den WLAN-Einstellungen auswählen und einfügen.</string>
+
+    <!-- Verlauf -->
     <string name="history_title">Letzte Scans</string>
-    <string name="history_clear">Löschen</string>
+    <string name="history_clear">Verlauf löschen</string>
     <string name="history_clear_confirm_title">Verlauf löschen</string>
-    <string name="history_clear_confirm_message">Sind Sie sicher, dass Sie den gesamten Scanverlauf löschen möchten?</string>
+    <string name="history_clear_confirm_message">Damit werden alle gespeicherten Scans gelöscht. Das lässt sich nicht rückgängig machen.</string>
     <string name="history_clear_confirm_cancel">Abbrechen</string>
     <string name="history_clear_confirm_confirm">Alle löschen</string>
     <string name="history_search">Verlauf durchsuchen&#8230;</string>
-    <string name="history_empty">Keine Scans entsprechen Ihrer Suche</string>
-
+    <string name="history_search_clear">Suche zurücksetzen</string>
+    <string name="history_delete_item">Scan löschen</string>
+    <string name="history_empty">Keine Treffer für diese Suche</string>
+    <string name="history_no_items">Noch keine Scans</string>
+    <string name="history_export">Verlauf exportieren</string>
     <string name="history_export_json">Als JSON exportieren</string>
     <string name="history_export_csv">Als CSV exportieren</string>
+    <string name="history_export_empty">Es gibt noch nichts zu exportieren</string>
+    <string name="history_share_title">Verlaufsdatei teilen</string>
 
-    <string name="history_no_items">Noch kein Scanverlauf vorhanden</string>
-    
     <!-- Generator -->
     <string name="generator_title">QR-Code erstellen</string>
-    <string name="generator_input">Text oder URL eingeben</string>
-    <string name="generator_empty_subtitle">Geben Sie oben Text oder eine URL ein, um einen QR-Code zu erstellen</string>
     <string name="generator_generate">Erstellen</string>
-    <string name="generator_save">Bild speichern</string>
+    <string name="generator_clear">Formular leeren</string>
+    <string name="generator_clear_field">Leeren</string>
+    <string name="generator_save">Speichern</string>
     <string name="generator_share">Teilen</string>
+    <string name="generator_qr_image">Erstellter QR-Code</string>
+    <string name="generator_share_title">QR-Code teilen</string>
+    <string name="generator_saved">In der Galerie gespeichert</string>
+    <string name="generator_save_failed">Bild konnte nicht gespeichert werden</string>
+    <string name="generator_share_failed">QR-Code konnte nicht geteilt werden</string>
+    <string name="generator_empty_subtitle">Formular oben ausfüllen — der QR-Code erscheint hier</string>
+    <string name="generator_error_failed">Aus diesem Inhalt ließ sich kein QR-Code erstellen</string>
 
-    <string name="generator_saved">QR-Code gespeichert ✓</string>
-    <string name="generator_save_failed">QR-Code konnte nicht gespeichert werden</string>
-    
-    <!-- Permission -->
-    <string name="permission_title">Kameraberechtigung erforderlich</string>
-    <string name="permission_message">Bitte erlauben Sie den Kamerazugriff, um QR-Codes zu scannen. Möglicherweise müssen Sie ihn in den Geräteeinstellungen aktivieren.</string>
-    <string name="permission_retry">Erneut versuchen</string>
+    <!-- Generator-Felder -->
+    <string name="generator_field_text">Text</string>
+    <string name="generator_field_url">Webadresse</string>
+    <string name="generator_field_ssid">Netzwerkname</string>
+    <string name="generator_field_password">Passwort</string>
+    <string name="generator_field_hidden">Verborgenes Netzwerk</string>
+    <string name="generator_field_email">E-Mail-Adresse</string>
+    <string name="generator_field_subject">Betreff</string>
+    <string name="generator_field_body">Nachricht</string>
+    <string name="generator_field_phone">Telefonnummer</string>
+    <string name="generator_field_sms_number">Telefonnummer</string>
+    <string name="generator_field_message">Nachricht</string>
 
-    
-    <!-- Settings -->
+    <!-- Kameraberechtigung -->
+    <string name="permission_title">Kamerazugriff erforderlich</string>
+    <string name="permission_message">QuickQR braucht die Kamera, um QR-Codes zu lesen. Es wird nichts aufgezeichnet und nichts hochgeladen.</string>
+    <string name="permission_message_denied">Der Kamerazugriff ist deaktiviert. Zum Scannen bitte in den App-Einstellungen aktivieren.</string>
+    <string name="permission_retry">Kamera erlauben</string>
+    <string name="permission_open_settings">Einstellungen öffnen</string>
+
+    <!-- Einstellungen -->
     <string name="settings_title">Einstellungen</string>
-    <string name="settings_haptic">Vibrationsfeedback</string>
-    <string name="settings_haptic_desc">Bei erfolgreichem Scan vibrieren</string>
-    <string name="settings_continuous">Kontinuierliches Scannen</string>
-    <string name="settings_continuous_desc">Scanner nach einem Scan automatisch fortsetzen</string>
+    <string name="settings_haptic">Vibration</string>
+    <string name="settings_haptic_desc">Nach einem erfolgreichen Scan vibrieren</string>
+    <string name="settings_continuous">Fortlaufendes Scannen</string>
+    <string name="settings_continuous_desc">Weiterscannen, statt bei jedem Ergebnis anzuhalten</string>
+    <string name="settings_theme">Darstellung</string>
+    <string name="settings_theme_system">Systemeinstellung</string>
+    <string name="settings_theme_light">Hell</string>
+    <string name="settings_theme_dark">Dunkel</string>
+    <string name="settings_dynamic_color">Hintergrundfarben</string>
+    <string name="settings_dynamic_color_desc">App an das Hintergrundbild anpassen</string>
     <string name="settings_language">Sprache</string>
+    <string name="settings_version">Version ⁨%1$s (%2$d)⁩</string>
+    <string name="settings_open_website">Website öffnen</string>
 
-    
-    <!-- Onboarding -->
-    <string name="onboarding_slide1_title">Schnell &amp; Privat</string>
-    <string name="onboarding_slide1_text">QuickQR verwendet Ihre Kamera nur zum Scannen. Es verlassen keine Daten Ihr Gerät.</string>
-    <string name="onboarding_slide2_title">Intelligente Erkennung</string>
-    <string name="onboarding_slide2_text">URLs, WLAN, Kontakte, E-Mails — automatisch erkannt und einsatzbereit.</string>
+    <!-- Einführung -->
+    <string name="onboarding_slide1_title">Schnell und privat</string>
+    <string name="onboarding_slide1_text">QuickQR nutzt die Kamera ausschließlich zum Scannen. Es verlassen keine Daten das Gerät.</string>
+    <string name="onboarding_slide2_title">Erkennt, was es liest</string>
+    <string name="onboarding_slide2_text">Links, WLAN-Netzwerke, Kontakte, E-Mails — automatisch erkannt und sofort nutzbar.</string>
     <string name="onboarding_slide3_title">Bereit zum Scannen</string>
-    <string name="onboarding_slide3_text">Richten Sie Ihre Kamera auf einen QR-Code, um zu beginnen.</string>
+    <string name="onboarding_slide3_text">Die Kamera auf einen beliebigen QR-Code richten und loslegen.</string>
     <string name="onboarding_next">Weiter</string>
     <string name="onboarding_start">Loslegen</string>
     <string name="onboarding_skip">Überspringen</string>
-    <string name="privacy_policy">Datenschutzerklärung</string>
-    <string name="error_open_action">Aktion konnte nicht geöffnet werden</string>
-    <string name="error_add_contact">Kontakt konnte nicht hinzugefügt werden</string>
-    <string name="error_add_event">Kalenderereignis konnte nicht hinzugefügt werden</string>
-    <string name="error_storage_permission">Speicherberechtigung ist zum Speichern des Bildes erforderlich</string>
-    <string name="error_share_history">Verlaufsdatei konnte nicht freigegeben werden</string>
 
-    <!-- vCard & Calendar details -->
+    <!-- Kontakt- und Termindetails -->
     <string name="vcard_organization">Organisation</string>
-    <string name="vcard_title">Berufsbezeichnung</string>
+    <string name="vcard_title">Position</string>
     <string name="vcard_website">Website</string>
+    <string name="vcard_address">Adresse</string>
+    <string name="vcard_birthday">Geburtstag</string>
+    <string name="vcard_note">Notiz</string>
+    <string name="event_untitled">Termin ohne Titel</string>
     <string name="event_description">Beschreibung</string>
     <string name="event_location">Ort</string>
-    <string name="event_start">Startzeit</string>
-    <string name="event_end">Endzeit</string>
+    <string name="event_start">Beginn</string>
+    <string name="event_end">Ende</string>
+
+    <!-- Fehler -->
+    <string name="privacy_policy">Datenschutzerklärung</string>
+    <string name="error_open_action">Keine App auf diesem Gerät kann das öffnen</string>
+    <string name="error_add_contact">Die Kontakte-App ließ sich nicht öffnen</string>
+    <string name="error_add_event">Die Kalender-App ließ sich nicht öffnen</string>
+    <string name="error_wifi_connect">Die Netzwerkeinstellungen ließen sich nicht öffnen</string>
+    <string name="error_storage_permission">Zum Speichern des Bildes wird Speicherzugriff benötigt</string>
+    <string name="error_share_history">Die Verlaufsdatei konnte nicht geteilt werden</string>
+    <string name="error_no_browser">Auf diesem Gerät ist kein Browser installiert</string>
+    <plurals name="generator_error_too_long">
+        <item quantity="one">Der Inhalt hat %1$d Byte — mehr als %2$d fasst ein QR-Code nicht. Bitte kürzen und erneut versuchen.</item>
+        <item quantity="other">Der Inhalt hat %1$d Byte — mehr als %2$d fasst ein QR-Code nicht. Bitte kürzen und erneut versuchen.</item>
+    </plurals>
 </resources>

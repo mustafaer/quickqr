@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+   The app only ever shares files it wrote to its own cache directory
+   (history exports and generated QR images). Nothing else is exposed.
+-->
 <paths>
     <cache-path name="shared_files" path="." />
-    <external-path name="external_files" path="." />
 </paths>

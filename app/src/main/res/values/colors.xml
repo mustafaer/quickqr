@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Splash screen brand colour, deliberately the same in light and dark. -->
     <color name="colorPrimaryDark">#3F1BB9</color>
+
+    <!-- Must match QuickQrTheme's LightColorScheme.background so there is no
+         colour jump between the window background and the first Compose frame. -->
+    <color name="window_background">#F3F4F7</color>
 </resources>

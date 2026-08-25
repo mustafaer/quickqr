@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,12 +28,47 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import net.mustafaer.quickqr.R
 
+/**
+ * The onboarding pages, in order. Everything that used to be a bare `3` — the
+ * pager's page count, the indicator loop, the "is this the last page" checks —
+ * now derives from this list, so adding or removing a page is a one-line change.
+ */
+private val onboardingPages = listOf(
+    OnboardingPageData(
+        titleRes = R.string.onboarding_slide1_title,
+        textRes = R.string.onboarding_slide1_text,
+        icon = Icons.Outlined.PrivacyTip,
+        accent = Color(0xFF43A047)
+    ),
+    OnboardingPageData(
+        titleRes = R.string.onboarding_slide2_title,
+        textRes = R.string.onboarding_slide2_text,
+        icon = Icons.Outlined.Search,
+        accent = Color(0xFF5B3FF2)
+    ),
+    OnboardingPageData(
+        titleRes = R.string.onboarding_slide3_title,
+        textRes = R.string.onboarding_slide3_text,
+        icon = Icons.Outlined.QrCodeScanner,
+        accent = Color(0xFFFFB866)
+    )
+)
+
+private data class OnboardingPageData(
+    val titleRes: Int,
+    val textRes: Int,
+    val icon: ImageVector,
+    val accent: Color
+)
+
 @Composable
 fun OnboardingScreen(
     onComplete: () -> Unit
 ) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
-    val coroutineScope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(pageCount = { onboardingPages.size })
+    val scope = rememberCoroutineScope()
+    val lastPageIndex = onboardingPages.lastIndex
+    val isLastPage = pagerState.currentPage == lastPageIndex
 
     Column(
         modifier = Modifier
@@ -42,7 +78,6 @@ fun OnboardingScreen(
             .navigationBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Top Toolbar with Skip Button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -51,7 +86,7 @@ fun OnboardingScreen(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (pagerState.currentPage < 2) {
+            if (!isLastPage) {
                 TextButton(onClick = onComplete) {
                     Text(
                         text = stringResource(R.string.onboarding_skip),
@@ -62,51 +97,53 @@ fun OnboardingScreen(
             }
         }
 
-        // Horizontal Pager
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.weight(1f)
         ) { page ->
-            OnboardingPage(page = page)
+            OnboardingPage(onboardingPages[page])
         }
 
-        // Pager Indicators and Navigation Buttons
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Indicators
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(bottom = 32.dp)
             ) {
-                repeat(3) { index ->
+                onboardingPages.indices.forEach { index ->
                     val isSelected = pagerState.currentPage == index
-                    val width = animateDpAsState(targetValue = if (isSelected) 24.dp else 8.dp, label = "")
+                    val width by animateDpAsState(
+                        targetValue = if (isSelected) 24.dp else 8.dp,
+                        label = "pageIndicatorWidth"
+                    )
                     Box(
                         modifier = Modifier
                             .height(8.dp)
-                            .width(width.value)
+                            .width(width)
                             .clip(CircleShape)
                             .background(
-                                if (isSelected) MaterialTheme.colorScheme.primary 
-                                else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                if (isSelected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                }
                             )
                     )
                 }
             }
 
-            // Next / Get Started Button
             Button(
                 onClick = {
-                    if (pagerState.currentPage < 2) {
-                        coroutineScope.launch {
+                    if (isLastPage) {
+                        onComplete()
+                    } else {
+                        scope.launch {
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }
-                    } else {
-                        onComplete()
                     }
                 },
                 modifier = Modifier
@@ -119,11 +156,9 @@ fun OnboardingScreen(
                 )
             ) {
                 Text(
-                    text = if (pagerState.currentPage == 2) {
-                        stringResource(R.string.onboarding_start)
-                    } else {
-                        stringResource(R.string.onboarding_next)
-                    },
+                    text = stringResource(
+                        if (isLastPage) R.string.onboarding_start else R.string.onboarding_next
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -133,31 +168,7 @@ fun OnboardingScreen(
 }
 
 @Composable
-fun OnboardingPage(page: Int) {
-    val title = when (page) {
-        0 -> stringResource(R.string.onboarding_slide1_title)
-        1 -> stringResource(R.string.onboarding_slide2_title)
-        else -> stringResource(R.string.onboarding_slide3_title)
-    }
-
-    val description = when (page) {
-        0 -> stringResource(R.string.onboarding_slide1_text)
-        1 -> stringResource(R.string.onboarding_slide2_text)
-        else -> stringResource(R.string.onboarding_slide3_text)
-    }
-
-    val icon = when (page) {
-        0 -> Icons.Outlined.PrivacyTip
-        1 -> Icons.Outlined.Search
-        else -> Icons.Outlined.QrCodeScanner
-    }
-
-    val iconColor = when (page) {
-        0 -> Color(0xFF43A047)
-        1 -> Color(0xFF5B3FF2)
-        else -> Color(0xFFFFB866)
-    }
-
+private fun OnboardingPage(page: OnboardingPageData) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -165,26 +176,25 @@ fun OnboardingPage(page: Int) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Beautiful Premium Feature Icon Representation
         Box(
             modifier = Modifier
                 .size(160.dp)
                 .clip(CircleShape)
-                .background(iconColor.copy(alpha = 0.1f)),
+                .background(page.accent.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                imageVector = page.icon,
                 contentDescription = null,
                 modifier = Modifier.size(80.dp),
-                tint = iconColor
+                tint = page.accent
             )
         }
 
         Spacer(modifier = Modifier.height(48.dp))
 
         Text(
-            text = title,
+            text = stringResource(page.titleRes),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -194,7 +204,7 @@ fun OnboardingPage(page: Int) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = description,
+            text = stringResource(page.textRes),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),

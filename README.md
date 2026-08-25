@@ -1,105 +1,115 @@
 # QuickQR
 
-> Fast, private, and 100% offline QR code scanner & generator for Android. Built natively using Jetpack Compose.
+> Fast, private, and 100% offline QR code scanner & generator for Android. Built natively with Kotlin and Jetpack Compose.
 
 <p align="center">
-  <img src="/Users/mustafaer/.gemini/antigravity-ide/brain/67caf8c1-e76a-4c7e-8662-7a11600127af/quickqr_feature_graphic_horizontal_1781003918274.png" alt="QuickQR Banner" width="100%" />
-</p>
-
-<p align="center">
-  <a href="https://github.com/nicemustafa/quickqr/releases"><img src="https://img.shields.io/github/v/release/nicemustafa/quickqr?style=flat-square" alt="Release" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/nicemustafa/quickqr?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/mustafaer/quickqr/releases"><img src="https://img.shields.io/github/v/release/mustafaer/quickqr?style=flat-square" alt="Release" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/mustafaer/quickqr?style=flat-square" alt="License" /></a>
   <a href="https://play.google.com/store/apps/details?id=net.mustafaer.quickqr"><img src="https://img.shields.io/badge/Google%20Play-Download-brightgreen?style=flat-square&logo=google-play" alt="Google Play" /></a>
 </p>
 
 ---
 
-QuickQR is a premium, lightweight, and professional-grade QR code scanner, barcode reader, and custom QR generator for Android. Built entirely from scratch with **Kotlin and Jetpack Compose**, it prioritizes speed, high-quality user experience, and absolute user privacy by working **100% offline with zero advertisements**.
+QuickQR is a lightweight QR code scanner, barcode reader, and QR generator for Android. It works entirely on your device: it does not request the `INTERNET` permission, carries no trackers, and shows no ads.
 
 ## ✨ Features
 
-- ⚡ **Lightning-Fast Scanning** — Powered by Google's ML Kit Barcode Scanning API for near-instant QR and barcode detection.
-- 🎨 **Custom QR Generator** — Generate high-quality QR codes in seconds for URLs, Wi-Fi, email, phone numbers, SMS, and plain text.
-- 🔒 **Privacy First (100% Offline)** — The app does **not** request `INTERNET` permission. All processing and storage happen locally on your device.
-- 📁 **Searchable History & Exports** — Keep track of your scans with local database storage. Export your history easily to CSV or JSON formats.
-- ⚡ **Intelligent Context Actions** — Open URLs instantly, connect to Wi-Fi networks, send emails/SMS, or call numbers directly from scan results.
-- 🎨 **Modern Material 3 Design** — Full support for system Light/Dark mode, featuring beautiful transitions, responsive layouts, and standard premium buttons.
-- 🔋 **Zero Bloat & Battery Efficient** — No trackers, no background processes, and zero ads to preserve your device performance.
+- ⚡ **Fast scanning** — Google ML Kit reads QR codes and common 1D/2D barcodes straight from the camera preview, or from an image in your gallery.
+- 🧠 **Knows what it read** — Links, Wi-Fi networks, contacts (vCard/MECARD), calendar events, emails, phone numbers, SMS and geo coordinates are recognised automatically, with the right action offered for each: join the network, add the contact, save the event, dial, or open.
+- 🎨 **QR generator** — Build codes for plain text, links, Wi-Fi credentials, email, phone numbers and SMS from purpose-built forms. Save to your gallery or share directly.
+- 🔒 **Private by construction** — No `INTERNET` permission, so nothing can be uploaded even in principle. History and settings never leave the device.
+- 📁 **Searchable history** — The last 100 scans, stored locally, searchable in every supported language, exportable to CSV or JSON.
+- 🌍 **Five languages** — English, Turkish, German, Hindi and Arabic, with full right-to-left support and per-app language selection on Android 13+.
+- 🌗 **Material 3** — Light, dark or system theme, with optional Material You wallpaper colours on Android 12+.
 
-## 🛠️ Tech Stack
+## 🛠️ Tech stack
 
-- **Language:** Kotlin 2.x
-- **UI Framework:** Jetpack Compose (Material 3)
-- **Scanning API:** Google ML Kit Barcode Scanning & CameraX
-- **Local Storage:** Jetpack Room (SQLite) for history, Preferences DataStore for settings
-- **QR Code Generation:** ZXing (Zebra Crossing)
-- **Platform:** Native Android (minSdk 26, targetSdk 36)
-- **Build System:** Kotlin DSL (`build.gradle.kts`) with R8/ProGuard compiler optimizations
+| | |
+|---|---|
+| **Language** | Kotlin |
+| **UI** | Jetpack Compose, Material 3 |
+| **Camera** | CameraX |
+| **Scanning** | Google ML Kit Barcode Scanning (on-device) |
+| **Generation** | ZXing |
+| **Storage** | Room (history), Preferences DataStore (settings) |
+| **Build** | Gradle Kotlin DSL with a version catalog, R8 for release builds |
+| **Platform** | minSdk 23, targetSdk 36, compileSdk 36 |
 
-## 🚀 Getting Started
+## 🚀 Getting started
 
 ### Prerequisites
 
-- [Android Studio](https://developer.android.com/studio) (Koala/Ladybug or newer)
-- Java Development Kit (JDK) 17 or 21
-- Android SDK 36 (Android 16 API level support)
+- [Android Studio](https://developer.android.com/studio) Koala/Ladybug or newer
+- JDK 21
+- Android SDK 36
 
-### Setup & Installation
+### Build
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/mustafaer/quickqr.git
-   cd quickqr
-   ```
+```bash
+git clone https://github.com/mustafaer/quickqr.git
+```
 
-2. **Open the project** in Android Studio.
+```bash
+./gradlew assembleDebug
+```
 
-3. **Build the Debug APK:**
-   ```bash
-   ./gradlew assembleDebug
-   ```
+```bash
+./gradlew testDebugUnitTest lintDebug
+```
 
-4. **Build the Optimized Release APK / App Bundle:**
-   ```bash
-   ./gradlew assembleRelease
-   ```
-   *Note: Ensure you configure your signing properties in `keystore.properties` for production releases.*
+`assembleRelease` produces an **unsigned** APK — release signing is configured in
+Android Studio (*Build → Generate Signed App Bundle / APK*) rather than in the
+build script, so no keystore or credentials live in this repository.
 
-## 📦 Project Structure
+## 📦 Project structure
 
 ```text
 quickqr/
+├── .github/workflows/ci.yml      # Unit tests, lint, unsigned release build
 ├── app/
-│   ├── proguard-rules.pro        # Comprehensive 100+ line ProGuard ruleset
-│   ├── build.gradle.kts          # App-level build configurations & dependencies
-│   └── src/main/
-│       ├── AndroidManifest.xml   # Target API 35/36 & hardened offline permissions
-│       ├── java/net/mustafaer/quickqr/
-│       │   ├── data/             # Room Database, DAOs, DataStore repository
-│       │   ├── ui/
-│       │   │   ├── screens/      # Scanner, Generator, History, Settings Screens
-│       │   │   ├── components/   # Unified buttons, bottom sheets, layouts
-│       │   │   └── theme/        # Material 3 colors, shapes, typography
-│       │   └── MainActivity.kt
-│       └── res/                  # Localized strings, backup policies, locales configs
-└── build.gradle.kts              # Project-level build configurations
+│   ├── proguard-rules.pro
+│   ├── build.gradle.kts
+│   ├── schemas/                  # Exported Room schemas, committed for migrations
+│   └── src/
+│       ├── main/
+│       │   ├── AndroidManifest.xml
+│       │   ├── java/net/mustafaer/quickqr/
+│       │   │   ├── data/         # Room, DAO, DataStore, AppLanguage, ThemeMode
+│       │   │   ├── ui/
+│       │   │   │   ├── screens/
+│       │   │   │   ├── components/
+│       │   │   │   ├── theme/
+│       │   │   │   └── viewmodel/
+│       │   │   ├── utils/        # Parsing, generation, export — no Android deps
+│       │   │   └── MainActivity.kt
+│       │   └── res/              # Strings in 5 languages, backup rules, locales
+│       └── test/                 # JVM unit tests for the utils layer
+├── gradle/libs.versions.toml     # Dependency version catalog
+└── build.gradle.kts
 ```
+
+The `utils` package is deliberately free of Android framework types so parsing,
+payload building and export logic can be covered by plain JVM unit tests.
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) — it covers the build commands, the code
+standards, and what adding a new language involves.
 
 ## 📄 License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
 
-## 👤 Author & Studio
+## 👤 Author
 
-**Mustafa ER** (Founder of MEDEV Studios)
-- Website: [MEDEV Studios](https://medevstudios.com)
-- Privacy Policy: [QuickQR Privacy Policy](https://medevstudios.com/quickqr/privacy-policy.html)
-- Email: mustafaerpro@gmail.com
+**Mustafa ER** — MEDEV Studios
+
+- Website: [medevstudios.com](https://medevstudios.com)
+- Privacy policy: [QuickQR privacy policy](https://medevstudios.com/quickqr/privacy-policy.html)
 - GitHub: [@mustafaer](https://github.com/mustafaer)
 
 ## 💖 Support
 
-If you find QuickQR useful, feel free to support:
 - ⭐ Star this repository
 - ☕ [Buy me a coffee](https://www.buymeacoffee.com/mustafaer)
 - 🎉 [Patreon](https://www.patreon.com/mustafaer)

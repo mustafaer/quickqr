@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -140,17 +141,25 @@ val AppTypography = Typography(
     )
 )
 
+/**
+ * @param darkTheme defaults to the configuration's night mode. The theme setting is
+ *   applied through `AppCompatDelegate.setDefaultNightMode`, which rewrites that
+ *   configuration — so an explicit light/dark choice reaches both Compose and the
+ *   `-night` resource qualifiers, and the window background stops disagreeing with
+ *   the first Compose frame.
+ * @param dynamicColor opts into Material You wallpaper colours on Android 12+.
+ */
 @Composable
 fun QuickQrTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
+    val supportsDynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = androidx.compose.ui.platform.LocalContext.current
+        dynamicColor && supportsDynamicColor ->
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

@@ -1,120 +1,163 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">QuickQR</string>
-    
-    <!-- Header/Navigation -->
-    <string name="header_switch_camera">تغيير الكاميرا</string>
-    <string name="header_torch_on">إيقاف تشغيل الكشاف</string>
+
+    <!-- عناصر التحكم في الماسح -->
+    <string name="header_switch_camera">تبديل الكاميرا</string>
+    <string name="header_torch_on">إطفاء الكشاف</string>
     <string name="header_torch_off">تشغيل الكشاف</string>
 
-    
-    <!-- Navigation Tabs -->
+    <!-- التنقل -->
     <string name="nav_scan">مسح</string>
     <string name="nav_create">إنشاء</string>
     <string name="nav_history">السجل</string>
     <string name="nav_settings">الإعدادات</string>
-    
-    <!-- Scanner Screen -->
-    <string name="scan_empty_title">مسح رمز QR</string>
 
+    <!-- شاشة المسح -->
+    <string name="scan_empty_title">امسح رمز QR</string>
     <string name="scan_result_title">نتيجة المسح</string>
-
     <string name="scan_gallery">المعرض</string>
-    <string name="no_qr_found">لم يتم العثور على رمز QR في الصورة</string>
-    
-    <!-- Result Types -->
-    <string name="type_url">رابط URL</string>
-    <string name="type_wifi">واي فاي</string>
-    <string name="type_email">البريد الإلكتروني</string>
-    <string name="type_phone">الهاتف</string>
-    <string name="type_geo">الموقع</string>
-    <string name="type_sms">رسالة نصية</string>
+    <string name="no_qr_found">لا يوجد رمز QR في هذه الصورة</string>
+    <string name="scan_saved_to_history">تم الحفظ</string>
+    <string name="scan_share_title">مشاركة نتيجة المسح</string>
+
+    <!-- أنواع النتائج -->
+    <string name="type_url">رابط</string>
+    <string name="type_email">بريد إلكتروني</string>
+    <string name="type_phone">هاتف</string>
+    <string name="type_geo">موقع</string>
     <string name="type_vcard">جهة اتصال</string>
     <string name="type_calendar">حدث</string>
     <string name="type_text">نص</string>
-    
-    <!-- Actions -->
+
+    <!-- الإجراءات -->
     <string name="action_copy">نسخ</string>
     <string name="action_copy_all">نسخ الكل</string>
     <string name="action_copy_password">نسخ كلمة المرور</string>
+    <string name="action_share">مشاركة</string>
     <string name="action_open">فتح</string>
+    <string name="action_connect_wifi">الاتصال بالشبكة</string>
     <string name="action_add_contact">إضافة إلى جهات الاتصال</string>
     <string name="action_add_calendar">إضافة إلى التقويم</string>
-    <string name="action_copied">تم النسخ إلى الحافظة ✓</string>
+    <string name="action_copied">تم النسخ إلى الحافظة</string>
 
-    
-    <!-- Wi-Fi specific -->
+    <!-- Wi-Fi -->
     <string name="wifi_network">الشبكة</string>
-    <string name="wifi_security">الأمان</string>
+    <string name="wifi_security">الحماية</string>
     <string name="wifi_password">كلمة المرور</string>
     <string name="wifi_hidden">شبكة مخفية</string>
     <string name="wifi_show_password">إظهار كلمة المرور</string>
     <string name="wifi_hide_password">إخفاء كلمة المرور</string>
-    
-    <!-- History -->
-    <string name="history_title">المسوحات الأخيرة</string>
-    <string name="history_clear">مسح</string>
-    <string name="history_clear_confirm_title">مسح السجل</string>
-    <string name="history_clear_confirm_message">هل أنت متأكد من أنك تريد حذف سجل المسح بالكامل؟</string>
-    <string name="history_clear_confirm_cancel">إلغاء</string>
-    <string name="history_clear_confirm_confirm">مسح الكل</string>
-    <string name="history_search">البحث في السجل&#8230;</string>
-    <string name="history_empty">لا توجد مسوحات تطابق بحثك</string>
+    <string name="wifi_security_open">بدون حماية</string>
+    <string name="wifi_connect_manual">تم نسخ كلمة المرور. اختر الشبكة من إعدادات Wi-Fi ثم الصقها.</string>
 
+    <!-- السجل -->
+    <string name="history_title">آخر عمليات المسح</string>
+    <string name="history_clear">حذف السجل</string>
+    <string name="history_clear_confirm_title">حذف السجل</string>
+    <string name="history_clear_confirm_message">سيؤدي هذا إلى حذف كل عمليات المسح المحفوظة، ولا يمكن التراجع عنه.</string>
+    <string name="history_clear_confirm_cancel">إلغاء</string>
+    <string name="history_clear_confirm_confirm">حذف الكل</string>
+    <string name="history_search">البحث في السجل&#8230;</string>
+    <string name="history_search_clear">مسح البحث</string>
+    <string name="history_delete_item">حذف العملية</string>
+    <string name="history_empty">لا توجد نتائج تطابق بحثك</string>
+    <string name="history_no_items">لا توجد عمليات مسح بعد</string>
+    <string name="history_export">تصدير السجل</string>
     <string name="history_export_json">تصدير بصيغة JSON</string>
     <string name="history_export_csv">تصدير بصيغة CSV</string>
+    <string name="history_export_empty">لا يوجد شيء لتصديره بعد</string>
+    <string name="history_share_title">مشاركة ملف السجل</string>
 
-    <string name="history_no_items">لا يوجد سجل مسح بعد</string>
-    
-    <!-- Generator -->
+    <!-- الإنشاء -->
     <string name="generator_title">إنشاء رمز QR</string>
-    <string name="generator_input">أدخل نصاً أو رابط URL</string>
-    <string name="generator_empty_subtitle">أدخل نصاً أو رابط URL أعلاه لإنشاء رمز QR</string>
     <string name="generator_generate">إنشاء</string>
-    <string name="generator_save">حفظ الصورة</string>
+    <string name="generator_clear">تفريغ النموذج</string>
+    <string name="generator_clear_field">مسح</string>
+    <string name="generator_save">حفظ</string>
     <string name="generator_share">مشاركة</string>
+    <string name="generator_qr_image">رمز QR الذي تم إنشاؤه</string>
+    <string name="generator_share_title">مشاركة رمز QR</string>
+    <string name="generator_saved">تم الحفظ في المعرض</string>
+    <string name="generator_save_failed">تعذّر حفظ الصورة</string>
+    <string name="generator_share_failed">تعذّرت مشاركة رمز QR</string>
+    <string name="generator_empty_subtitle">املأ النموذج أعلاه وسيظهر رمز QR هنا</string>
+    <string name="generator_error_failed">تعذّر إنشاء رمز QR من هذا المحتوى</string>
 
-    <string name="generator_saved">تم حفظ رمز QR ✓</string>
-    <string name="generator_save_failed">فشل حفظ رمز QR</string>
-    
-    <!-- Permission -->
-    <string name="permission_title">مطلوب إذن الكاميرا</string>
-    <string name="permission_message">يرجى السماح بالوصول إلى الكاميرا لمسح رموز QR. قد تحتاج إلى تمكينها من إعدادات جهازك.</string>
-    <string name="permission_retry">المحاولة مرة أخرى</string>
+    <!-- حقول الإنشاء -->
+    <string name="generator_field_text">نص</string>
+    <string name="generator_field_url">عنوان الويب</string>
+    <string name="generator_field_ssid">اسم الشبكة</string>
+    <string name="generator_field_password">كلمة المرور</string>
+    <string name="generator_field_hidden">شبكة مخفية</string>
+    <string name="generator_field_email">عنوان البريد الإلكتروني</string>
+    <string name="generator_field_subject">الموضوع</string>
+    <string name="generator_field_body">الرسالة</string>
+    <string name="generator_field_phone">رقم الهاتف</string>
+    <string name="generator_field_sms_number">رقم الهاتف</string>
+    <string name="generator_field_message">الرسالة</string>
 
-    
-    <!-- Settings -->
+    <!-- إذن الكاميرا -->
+    <string name="permission_title">إذن الكاميرا مطلوب</string>
+    <string name="permission_message">يحتاج QuickQR إلى الكاميرا لقراءة رموز QR. لا يتم تسجيل أي شيء ولا رفعه.</string>
+    <string name="permission_message_denied">الوصول إلى الكاميرا معطّل. فعّله من إعدادات التطبيق لبدء المسح.</string>
+    <string name="permission_retry">السماح بالكاميرا</string>
+    <string name="permission_open_settings">فتح الإعدادات</string>
+
+    <!-- الإعدادات -->
     <string name="settings_title">الإعدادات</string>
-    <string name="settings_haptic">الاهتزاز عند التفاعل</string>
-    <string name="settings_haptic_desc">اهتزاز عند نجاح المسح</string>
-    <string name="settings_continuous">مسح مستمر</string>
-    <string name="settings_continuous_desc">استئناف المسح تلقائياً بعد عملية مسح</string>
+    <string name="settings_haptic">الاهتزاز</string>
+    <string name="settings_haptic_desc">اهتزاز بعد كل عملية مسح ناجحة</string>
+    <string name="settings_continuous">المسح المتواصل</string>
+    <string name="settings_continuous_desc">مواصلة المسح بدلًا من التوقف عند كل نتيجة</string>
+    <string name="settings_theme">المظهر</string>
+    <string name="settings_theme_system">حسب النظام</string>
+    <string name="settings_theme_light">فاتح</string>
+    <string name="settings_theme_dark">داكن</string>
+    <string name="settings_dynamic_color">ألوان الخلفية</string>
+    <string name="settings_dynamic_color_desc">مطابقة ألوان التطبيق لخلفية الشاشة</string>
     <string name="settings_language">اللغة</string>
+    <string name="settings_version">الإصدار ⁨%1$s (%2$d)⁩</string>
+    <string name="settings_open_website">فتح الموقع</string>
 
-    
-    <!-- Onboarding -->
+    <!-- التعريف بالتطبيق -->
     <string name="onboarding_slide1_title">سريع وخاص</string>
-    <string name="onboarding_slide1_text">يستخدم QuickQR الكاميرا فقط للمسح الضوئي. لا تغادر أي بيانات جهازك.</string>
-    <string name="onboarding_slide2_title">التعرف الذكي</string>
-    <string name="onboarding_slide2_text">روابط URL، شبكات Wi-Fi، جهات الاتصال، رسائل البريد الإلكتروني — يتم التعرف عليها تلقائياً وجاهزة للاستخدام.</string>
+    <string name="onboarding_slide1_text">يستخدم QuickQR الكاميرا للمسح فقط. لا تغادر أي بيانات جهازك.</string>
+    <string name="onboarding_slide2_title">يعرف ما الذي قرأه</string>
+    <string name="onboarding_slide2_text">الروابط وشبكات Wi-Fi وجهات الاتصال والبريد الإلكتروني — يتعرّف عليها تلقائيًا وتصبح جاهزة للاستخدام.</string>
     <string name="onboarding_slide3_title">جاهز للمسح</string>
-    <string name="onboarding_slide3_text">وجه الكاميرا نحو أي رمز QR للبدء.</string>
+    <string name="onboarding_slide3_text">وجّه الكاميرا نحو أي رمز QR للبدء.</string>
     <string name="onboarding_next">التالي</string>
-    <string name="onboarding_start">البدء</string>
-    <string name="onboarding_skip">تخطي</string>
-    <string name="privacy_policy">سياسة الخصوصية</string>
-    <string name="error_open_action">تعذر فتح الإجراء</string>
-    <string name="error_add_contact">تعذر إضافة جهة الاتصال</string>
-    <string name="error_add_event">تعذر إضافة حدث التقويم</string>
-    <string name="error_storage_permission">إذن التخزين مطلوب لحفظ الصورة</string>
-    <string name="error_share_history">فشل مشاركة ملف السجل</string>
+    <string name="onboarding_start">لنبدأ</string>
+    <string name="onboarding_skip">تخطٍّ</string>
 
-    <!-- vCard & Calendar details -->
+    <!-- تفاصيل جهة الاتصال والحدث -->
     <string name="vcard_organization">المؤسسة</string>
     <string name="vcard_title">المسمى الوظيفي</string>
     <string name="vcard_website">الموقع الإلكتروني</string>
+    <string name="vcard_address">العنوان</string>
+    <string name="vcard_birthday">تاريخ الميلاد</string>
+    <string name="vcard_note">ملاحظة</string>
+    <string name="event_untitled">حدث بلا عنوان</string>
     <string name="event_description">الوصف</string>
-    <string name="event_location">الموقع</string>
-    <string name="event_start">وقت البدء</string>
-    <string name="event_end">وقت الانتهاء</string>
+    <string name="event_location">المكان</string>
+    <string name="event_start">يبدأ</string>
+    <string name="event_end">ينتهي</string>
+
+    <!-- الأخطاء -->
+    <string name="privacy_policy">سياسة الخصوصية</string>
+    <string name="error_open_action">لا يوجد تطبيق على هذا الجهاز يستطيع فتح ذلك</string>
+    <string name="error_add_contact">تعذّر فتح تطبيق جهات الاتصال</string>
+    <string name="error_add_event">تعذّر فتح تطبيق التقويم</string>
+    <string name="error_wifi_connect">تعذّر فتح إعدادات الشبكة</string>
+    <string name="error_storage_permission">يلزم إذن التخزين لحفظ الصورة</string>
+    <string name="error_share_history">تعذّرت مشاركة ملف السجل</string>
+    <string name="error_no_browser">لا يوجد متصفّح مثبّت على هذا الجهاز</string>
+    <plurals name="generator_error_too_long">
+        <item quantity="zero">حجم المحتوى %1$d بايت — ولا يتّسع رمز QR لأكثر من %2$d. اختصره ثم أعد المحاولة.</item>
+        <item quantity="one">حجم المحتوى بايت واحد — ولا يتّسع رمز QR لأكثر من %2$d. اختصره ثم أعد المحاولة.</item>
+        <item quantity="two">حجم المحتوى بايتان — ولا يتّسع رمز QR لأكثر من %2$d. اختصره ثم أعد المحاولة.</item>
+        <item quantity="few">حجم المحتوى %1$d بايتات — ولا يتّسع رمز QR لأكثر من %2$d. اختصره ثم أعد المحاولة.</item>
+        <item quantity="many">حجم المحتوى %1$d بايتًا — ولا يتّسع رمز QR لأكثر من %2$d. اختصره ثم أعد المحاولة.</item>
+        <item quantity="other">حجم المحتوى %1$d بايت — ولا يتّسع رمز QR لأكثر من %2$d. اختصره ثم أعد المحاولة.</item>
+    </plurals>
 </resources>

@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModelProvider
@@ -24,12 +25,10 @@ import net.mustafaer.quickqr.ui.viewmodel.AppViewModel
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Install the splash screen
         val splashScreen = installSplashScreen()
 
         super.onCreate(savedInstanceState)
 
-        // Enable Edge-to-Edge interface support
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.auto(
                 android.graphics.Color.TRANSPARENT,
@@ -41,38 +40,31 @@ class MainActivity : AppCompatActivity() {
             )
         )
 
-        // Initialize ViewModel using the default Factory
         val viewModel = ViewModelProvider(this)[AppViewModel::class.java]
 
-        // Keep the splash screen visible until the onboarding state is loaded from DataStore
-        splashScreen.setKeepOnScreenCondition {
-            viewModel.onboardingComplete.value == null
-        }
+        // Hold the splash until DataStore has told us whether onboarding is done,
+        // so the app never flashes the wrong first screen.
+        splashScreen.setKeepOnScreenCondition { viewModel.onboardingComplete.value == null }
 
         setContent {
-            QuickQrTheme {
-                val isOnboardingComplete = viewModel.onboardingComplete.collectAsStateWithLifecycle().value
+            val dynamicColor by viewModel.dynamicColor.collectAsStateWithLifecycle()
+
+            QuickQrTheme(dynamicColor = dynamicColor) {
+                val isOnboardingComplete by viewModel.onboardingComplete.collectAsStateWithLifecycle()
 
                 AnimatedContent(
                     targetState = isOnboardingComplete,
                     transitionSpec = {
-                        fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
+                        fadeIn(animationSpec = tween(500)) togetherWith
+                            fadeOut(animationSpec = tween(500))
                     },
                     label = "appTransition"
                 ) { state ->
                     when (state) {
-                        null -> {
-                            // Render a blank placeholder while loading (splash screen remains visible)
-                            Box(modifier = Modifier.fillMaxSize())
-                        }
-                        false -> {
-                            OnboardingScreen(
-                                onComplete = { viewModel.setOnboardingComplete(true) }
-                            )
-                        }
-                        true -> {
-                            MainContainer(viewModel = viewModel)
-                        }
+                        // Blank placeholder; the splash screen is still covering it.
+                        null -> Box(modifier = Modifier.fillMaxSize())
+                        false -> OnboardingScreen(onComplete = { viewModel.setOnboardingComplete(true) })
+                        true -> MainContainer(viewModel = viewModel)
                     }
                 }
             }

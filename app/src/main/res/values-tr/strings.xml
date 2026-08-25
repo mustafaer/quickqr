@@ -1,120 +1,159 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">QuickQR</string>
-    
-    <!-- Header/Navigation -->
+
+    <!-- Tarayıcı kontrolleri -->
     <string name="header_switch_camera">Kamerayı değiştir</string>
     <string name="header_torch_on">Feneri kapat</string>
     <string name="header_torch_off">Feneri aç</string>
 
-    
-    <!-- Navigation Tabs -->
+    <!-- Gezinme sekmeleri -->
     <string name="nav_scan">Tara</string>
     <string name="nav_create">Oluştur</string>
     <string name="nav_history">Geçmiş</string>
     <string name="nav_settings">Ayarlar</string>
-    
-    <!-- Scanner Screen -->
-    <string name="scan_empty_title">QR Kod Tara</string>
 
-    <string name="scan_result_title">Tarama Sonucu</string>
-
+    <!-- Tarayıcı ekranı -->
+    <string name="scan_empty_title">QR kod tarayın</string>
+    <string name="scan_result_title">Tarama sonucu</string>
     <string name="scan_gallery">Galeri</string>
-    <string name="no_qr_found">Görselde QR kod bulunamadı</string>
-    
-    <!-- Result Types -->
-    <string name="type_url">URL</string>
-    <string name="type_wifi">Wi-Fi</string>
+    <string name="no_qr_found">Bu görselde QR kod bulunamadı</string>
+    <string name="scan_saved_to_history">Kaydedildi</string>
+    <string name="scan_share_title">Tarama sonucunu paylaş</string>
+
+    <!-- Sonuç türleri -->
+    <string name="type_url">Bağlantı</string>
     <string name="type_email">E-posta</string>
     <string name="type_phone">Telefon</string>
     <string name="type_geo">Konum</string>
-    <string name="type_sms">SMS</string>
     <string name="type_vcard">Kişi</string>
     <string name="type_calendar">Etkinlik</string>
     <string name="type_text">Metin</string>
-    
-    <!-- Actions -->
-    <string name="action_copy">Kopyala</string>
-    <string name="action_copy_all">Tümünü Kopyala</string>
-    <string name="action_copy_password">Şifreyi Kopyala</string>
-    <string name="action_open">Aç</string>
-    <string name="action_add_contact">Kişilere Ekle</string>
-    <string name="action_add_calendar">Takvime Ekle</string>
-    <string name="action_copied">Panoya kopyalandı ✓</string>
 
-    
-    <!-- Wi-Fi specific -->
+    <!-- Eylemler -->
+    <string name="action_copy">Kopyala</string>
+    <string name="action_copy_all">Tümünü kopyala</string>
+    <string name="action_copy_password">Parolayı kopyala</string>
+    <string name="action_share">Paylaş</string>
+    <string name="action_open">Aç</string>
+    <string name="action_connect_wifi">Ağa bağlan</string>
+    <string name="action_add_contact">Kişilere ekle</string>
+    <string name="action_add_calendar">Takvime ekle</string>
+    <string name="action_copied">Panoya kopyalandı</string>
+
+    <!-- Wi-Fi -->
     <string name="wifi_network">Ağ</string>
     <string name="wifi_security">Güvenlik</string>
-    <string name="wifi_password">Şifre</string>
-    <string name="wifi_hidden">Gizli Ağ</string>
-    <string name="wifi_show_password">Şifreyi göster</string>
-    <string name="wifi_hide_password">Şifreyi gizle</string>
-    
-    <!-- History -->
-    <string name="history_title">Son Taramalar</string>
-    <string name="history_clear">Temizle</string>
-    <string name="history_clear_confirm_title">Geçmişi Temizle</string>
-    <string name="history_clear_confirm_message">Tüm tarama geçmişini silmek istediğinizden emin misiniz?</string>
-    <string name="history_clear_confirm_cancel">İptal</string>
-    <string name="history_clear_confirm_confirm">Hepsini Sil</string>
+    <string name="wifi_password">Parola</string>
+    <string name="wifi_hidden">Gizli ağ</string>
+    <string name="wifi_show_password">Parolayı göster</string>
+    <string name="wifi_hide_password">Parolayı gizle</string>
+    <string name="wifi_security_open">Şifresiz</string>
+    <string name="wifi_connect_manual">Parola kopyalandı. Wi-Fi ayarlarından ağı seçip yapıştırın.</string>
+
+    <!-- Geçmiş -->
+    <string name="history_title">Son taramalar</string>
+    <string name="history_clear">Geçmişi temizle</string>
+    <string name="history_clear_confirm_title">Geçmişi temizle</string>
+    <string name="history_clear_confirm_message">Kayıtlı tüm taramalar silinecek. Bu işlem geri alınamaz.</string>
+    <string name="history_clear_confirm_cancel">Vazgeç</string>
+    <string name="history_clear_confirm_confirm">Tümünü sil</string>
     <string name="history_search">Geçmişte ara&#8230;</string>
-    <string name="history_empty">Aramanızla eşleşen tarama yok</string>
+    <string name="history_search_clear">Aramayı temizle</string>
+    <string name="history_delete_item">Taramayı sil</string>
+    <string name="history_empty">Aramanızla eşleşen bir şey yok</string>
+    <string name="history_no_items">Henüz tarama yok</string>
+    <string name="history_export">Geçmişi dışa aktar</string>
+    <string name="history_export_json">JSON olarak dışa aktar</string>
+    <string name="history_export_csv">CSV olarak dışa aktar</string>
+    <string name="history_export_empty">Dışa aktarılacak bir şey yok</string>
+    <string name="history_share_title">Geçmiş dosyasını paylaş</string>
 
-    <string name="history_export_json">JSON olarak aktar</string>
-    <string name="history_export_csv">CSV olarak aktar</string>
-
-    <string name="history_no_items">Henüz tarama geçmişi yok</string>
-    
-    <!-- Generator -->
-    <string name="generator_title">QR Kod Oluştur</string>
-    <string name="generator_input">Metin veya URL girin</string>
-    <string name="generator_empty_subtitle">QR kod oluşturmak için yukarıya metin veya URL girin</string>
+    <!-- Oluşturucu -->
+    <string name="generator_title">QR kod oluştur</string>
     <string name="generator_generate">Oluştur</string>
-    <string name="generator_save">Resmi Kaydet</string>
+    <string name="generator_clear">Formu temizle</string>
+    <string name="generator_clear_field">Temizle</string>
+    <string name="generator_save">Kaydet</string>
     <string name="generator_share">Paylaş</string>
+    <string name="generator_qr_image">Oluşturulan QR kod</string>
+    <string name="generator_share_title">QR kodu paylaş</string>
+    <string name="generator_saved">Galerinize kaydedildi</string>
+    <string name="generator_save_failed">Görsel kaydedilemedi</string>
+    <string name="generator_share_failed">QR kod paylaşılamadı</string>
+    <string name="generator_empty_subtitle">Yukarıdaki formu doldurun, QR kodunuz burada görünsün</string>
+    <string name="generator_error_failed">Bu içerikten QR kod oluşturulamadı</string>
 
-    <string name="generator_saved">QR kodu kaydedildi ✓</string>
-    <string name="generator_save_failed">QR kodu kaydedilemedi</string>
-    
-    <!-- Permission -->
-    <string name="permission_title">Kamera İzni Gerekli</string>
-    <string name="permission_message">QR kodları taramak için kamera erişimine izin verin. Cihaz ayarlarından etkinleştirmeniz gerekebilir.</string>
-    <string name="permission_retry">Tekrar Dene</string>
+    <!-- Oluşturucu alanları -->
+    <string name="generator_field_text">Metin</string>
+    <string name="generator_field_url">Web adresi</string>
+    <string name="generator_field_ssid">Ağ adı</string>
+    <string name="generator_field_password">Parola</string>
+    <string name="generator_field_hidden">Gizli ağ</string>
+    <string name="generator_field_email">E-posta adresi</string>
+    <string name="generator_field_subject">Konu</string>
+    <string name="generator_field_body">Mesaj</string>
+    <string name="generator_field_phone">Telefon numarası</string>
+    <string name="generator_field_sms_number">Telefon numarası</string>
+    <string name="generator_field_message">Mesaj</string>
 
-    
-    <!-- Settings -->
+    <!-- Kamera izni -->
+    <string name="permission_title">Kamera izni gerekli</string>
+    <string name="permission_message">QuickQR, QR kodları okumak için kameranıza ihtiyaç duyar. Hiçbir kayıt tutulmaz, hiçbir şey yüklenmez.</string>
+    <string name="permission_message_denied">Kamera erişimi kapalı. Taramaya başlamak için uygulama ayarlarından açın.</string>
+    <string name="permission_retry">Kameraya izin ver</string>
+    <string name="permission_open_settings">Ayarları aç</string>
+
+    <!-- Ayarlar -->
     <string name="settings_title">Ayarlar</string>
-    <string name="settings_haptic">Titreşim Geri Bildirimi</string>
-    <string name="settings_haptic_desc">Başarılı taramada titret</string>
-    <string name="settings_continuous">Sürekli Tarama</string>
-    <string name="settings_continuous_desc">Taramadan sonra otomatik devam et</string>
+    <string name="settings_haptic">Titreşim</string>
+    <string name="settings_haptic_desc">Başarılı taramadan sonra titret</string>
+    <string name="settings_continuous">Sürekli tarama</string>
+    <string name="settings_continuous_desc">Her sonuçta durmak yerine taramaya devam et</string>
+    <string name="settings_theme">Görünüm</string>
+    <string name="settings_theme_system">Sistem ayarı</string>
+    <string name="settings_theme_light">Açık</string>
+    <string name="settings_theme_dark">Koyu</string>
+    <string name="settings_dynamic_color">Duvar kâğıdı renkleri</string>
+    <string name="settings_dynamic_color_desc">Uygulamayı duvar kâğıdınızla uyumlu hâle getir</string>
     <string name="settings_language">Dil</string>
+    <string name="settings_version">Sürüm ⁨%1$s (%2$d)⁩</string>
+    <string name="settings_open_website">Web sitesini aç</string>
 
-    
-    <!-- Onboarding -->
-    <string name="onboarding_slide1_title">Hızlı &amp; Gizli</string>
-    <string name="onboarding_slide1_text">QuickQR kullanırken kameranız sadece tarama yapmak için kullanılır. Hiçbir veri cihazınız dışına çıkmaz.</string>
-    <string name="onboarding_slide2_title">Akıllı Algılama</string>
-    <string name="onboarding_slide2_text">Web adresleri, Wi-Fi ağları, kartvizitler, e-postalar — otomatik algılanır ve hazır sunulur.</string>
-    <string name="onboarding_slide3_title">Taramaya Hazır</string>
-    <string name="onboarding_slide3_text">Başlamak için kameranızı herhangi bir QR koda doğru tutun.</string>
+    <!-- Tanıtım -->
+    <string name="onboarding_slide1_title">Hızlı ve gizli</string>
+    <string name="onboarding_slide1_text">QuickQR kameranızı yalnızca tarama için kullanır. Hiçbir veri cihazınızdan çıkmaz.</string>
+    <string name="onboarding_slide2_title">Ne okuduğunu bilir</string>
+    <string name="onboarding_slide2_text">Bağlantılar, Wi-Fi ağları, kişiler, e-postalar — otomatik tanınır ve hemen kullanıma hazır olur.</string>
+    <string name="onboarding_slide3_title">Taramaya hazır</string>
+    <string name="onboarding_slide3_text">Başlamak için kameranızı herhangi bir QR koda doğrultun.</string>
     <string name="onboarding_next">İleri</string>
     <string name="onboarding_start">Başla</string>
     <string name="onboarding_skip">Atla</string>
-    <string name="privacy_policy">Gizlilik Politikası</string>
-    <string name="error_open_action">İşlem açılamadı</string>
-    <string name="error_add_contact">Kişi eklenemedi</string>
-    <string name="error_add_event">Takvim etkinliği eklenemedi</string>
-    <string name="error_storage_permission">Resmi kaydetmek için depolama izni gereklidir</string>
-    <string name="error_share_history">Geçmiş dosyası paylaşılamadı</string>
 
-    <!-- vCard & Calendar details -->
+    <!-- Kişi ve etkinlik ayrıntıları -->
     <string name="vcard_organization">Kurum</string>
     <string name="vcard_title">Unvan</string>
-    <string name="vcard_website">Web Sitesi</string>
+    <string name="vcard_website">Web sitesi</string>
+    <string name="vcard_address">Adres</string>
+    <string name="vcard_birthday">Doğum tarihi</string>
+    <string name="vcard_note">Not</string>
+    <string name="event_untitled">Adsız etkinlik</string>
     <string name="event_description">Açıklama</string>
     <string name="event_location">Konum</string>
-    <string name="event_start">Başlangıç Zamanı</string>
-    <string name="event_end">Bitiş Zamanı</string>
+    <string name="event_start">Başlangıç</string>
+    <string name="event_end">Bitiş</string>
+
+    <!-- Hatalar -->
+    <string name="privacy_policy">Gizlilik politikası</string>
+    <string name="error_open_action">Bu cihazda bunu açabilecek bir uygulama yok</string>
+    <string name="error_add_contact">Kişiler uygulaması açılamadı</string>
+    <string name="error_add_event">Takvim uygulaması açılamadı</string>
+    <string name="error_wifi_connect">Ağ ayarları açılamadı</string>
+    <string name="error_storage_permission">Görseli kaydetmek için depolama izni gerekiyor</string>
+    <string name="error_share_history">Geçmiş dosyası paylaşılamadı</string>
+    <string name="error_no_browser">Bu cihazda yüklü bir tarayıcı yok</string>
+    <plurals name="generator_error_too_long">
+        <item quantity="one">İçerik %1$d bayt — bir QR kodun taşıyabileceği en fazla değer %2$d. Kısaltıp tekrar deneyin.</item>
+        <item quantity="other">İçerik %1$d bayt — bir QR kodun taşıyabileceği en fazla değer %2$d. Kısaltıp tekrar deneyin.</item>
+    </plurals>
 </resources>
