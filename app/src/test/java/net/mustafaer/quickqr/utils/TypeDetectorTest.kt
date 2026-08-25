@@ -251,14 +251,26 @@ class TypeDetectorTest {
         assertNotNull(event.start)
     }
 
+    /**
+     * Regression: the offset pattern only accepted four-digit forms, so `+03` was
+     * never captured and the value quietly became a zone-less local time. On a
+     * UTC+3 machine that produced the right answer by coincidence; everywhere
+     * else it was three hours out. Asserting the absolute instant — rather than
+     * that two forms merely agree — is what keeps that coincidence from hiding
+     * the bug again.
+     */
     @Test
-    fun `a two-digit timezone offset is padded before parsing`() {
-        val withShortOffset = TypeDetector.parseEventTime(
-            "DTSTART:20260825T090000+03", "DTSTART"
-        )
-        val withLongOffset = TypeDetector.parseEventTime(
-            "DTSTART:20260825T090000+0300", "DTSTART"
-        )
-        assertEquals(withLongOffset, withShortOffset)
+    fun `every timezone offset form resolves to the same instant`() {
+        // 2026-08-25T09:00:00+03:00
+        val expected = 1787637600000L
+        listOf(
+            "DTSTART:20260825T090000+03",
+            "DTSTART:20260825T090000+0300",
+            "DTSTART:20260825T090000+03:00"
+        ).forEach { input ->
+            assertEquals(input, expected, TypeDetector.parseEventTime(input, "DTSTART"))
+        }
+        // And an explicit Z is the same wall clock three hours later.
+        assertEquals(expected, TypeDetector.parseEventTime("DTSTART:20260825T060000Z", "DTSTART"))
     }
 }

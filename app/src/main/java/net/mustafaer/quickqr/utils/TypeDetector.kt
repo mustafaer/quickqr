@@ -353,8 +353,12 @@ object TypeDetector {
     }
 
     fun parseEventTime(text: String, key: String): Long? {
+        // The offset alternatives include a bare two-digit form because iCalendar
+        // writers emit +03 as well as +0300 and +03:00. Without it the offset was
+        // never captured, the value silently fell back to a zone-less local time,
+        // and the padding further down was unreachable.
         val timeRegex =
-            ("^$key(?:;[^:]*)?:([\\d\\-]+(?:T[\\d:]+(?:Z|[+-]\\d{2}:?\\d{2}|[+-]\\d{4})?)?)")
+            ("^$key(?:;[^:]*)?:([\\d\\-]+(?:T[\\d:]+(?:Z|[+-]\\d{2}(?::?\\d{2})?)?)?)")
                 .toRegex(MULTILINE_CI)
         val timeStr = timeRegex.find(text)?.groupValues?.get(1) ?: return null
         return try {
