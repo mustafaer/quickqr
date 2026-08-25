@@ -1,0 +1,9 @@
+Mit einem gescannten Code direkt ins WLAN — das Passwort muss nicht mehr abgetippt werden.
+
+QR-Codes für Links, WLAN, E-Mail, Telefon und SMS über eigene Formulare erstellen, nicht nur als reinen Text.
+
+Helles, dunkles oder Systemdesign wählen, auf Wunsch mit Hintergrundfarben.
+
+Kontaktkarten behalten jede Telefonnummer und E-Mail und lesen Adresse, Notiz und Geburtstag.
+
+Behoben: Die Verlaufssuche fand nichts mit % oder _ und ignorierte Groß- und Kleinschreibung außerhalb des Englischen.

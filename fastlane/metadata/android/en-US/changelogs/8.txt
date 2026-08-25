@@ -1,0 +1,9 @@
+Connect to Wi-Fi straight from a scanned code — no more typing the password by hand.
+
+Create QR codes for links, Wi-Fi, email, phone and SMS using dedicated forms, not just plain text.
+
+Pick a light, dark or system theme, with optional wallpaper colours.
+
+Contact cards now keep every phone number and email, and read address, notes and birthday.
+
+Fixed: history search missed anything containing % or _, and ignored case outside English. Gallery scans always show their result.

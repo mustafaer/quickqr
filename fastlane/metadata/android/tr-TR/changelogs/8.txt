@@ -1,0 +1,9 @@
+Taranan Wi-Fi karekodundan doğrudan ağa bağlanın; parolayı elle yazmaya gerek yok.
+
+Bağlantı, Wi-Fi, e-posta, telefon ve SMS için ayrı formlarla karekod oluşturun.
+
+Açık, koyu veya sistem teması seçin, dilerseniz duvar kâğıdı renklerini kullanın.
+
+Kartvizitlerdeki tüm telefon ve e-postalar korunuyor; adres, not ve doğum tarihi de okunuyor.
+
+Düzeltmeler: geçmiş aramasında % veya _ içeren sorgular sonuç vermiyordu ve Türkçe harfler yok sayılıyordu.
