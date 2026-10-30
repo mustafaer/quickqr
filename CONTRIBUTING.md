@@ -47,25 +47,34 @@ never surfaces.
 
 ```text
 app/src/main/java/net/mustafaer/quickqr/
-├── data/          Room database, DAO, DataStore settings, AppLanguage, ThemeMode
+├── data/          Room database and DAO, ScanRepository, SettingsRepository
+│                  (DataStore), MediaExporter, ImageCodeReader, AppLanguage, ThemeMode
 ├── ui/
-│   ├── screens/   Scanner, Generator, History, Settings, Onboarding, MainContainer
-│   ├── components/ScanResultSheet
-│   └── theme/     Material 3 colour schemes and typography
-├── utils/         TypeDetector, QrGenerator, QrPayload, HistoryExporter,
-│                  HistoryFilter, HapticHelper
+│   ├── screens/   Scanner, Generator, History, Settings, MainContainer
+│   ├── components/ScannerCamera, Viewfinder, ScanResultSheet, QrCanvas, RelativeTime
+│   ├── theme/     Material 3 colour schemes, typography, per-type colours
+│   └── viewmodel/ Scanner, Generator, History and Settings ViewModels
+├── utils/         TypeDetector, ScanClassifier, UrlInspector, LookalikeDetector,
+│                  PublicSuffix, PaymentParser, QrEncoder, QrPayload,
+│                  HistoryExporter, HistoryFilter, HapticHelper
+├── AppContainer.kt  Manual dependency injection
+├── QuickQrApp.kt
 └── MainActivity.kt
 ```
 
 ## Code standards
 
-- **Keep parsing logic out of Compose.** `TypeDetector`, `QrPayload`,
-  `HistoryExporter` and `HistoryFilter` are deliberately free of Android
-  framework types so they can be covered by plain JVM unit tests. If you need
-  something from `android.*` in one of them, that is a sign the logic belongs
-  somewhere else.
-- **Add a test with the fix.** Every bug fixed in those four classes should come
-  with a regression test in `app/src/test/`.
+- **Keep parsing logic out of Compose.** Everything in `utils/` except
+  `HapticHelper` is deliberately free of Android framework types so it can be
+  covered by plain JVM unit tests. If you need something from `android.*` in one
+  of them, that is a sign the logic belongs somewhere else.
+- **Add a test with the fix.** Every bug fixed in `utils/` or a ViewModel should
+  come with a regression test in `app/src/test/`. ViewModels take their
+  collaborators through constructors; test them with fakes, as
+  `ScannerViewModelTest` does.
+- **Look-alike detection is a list, not a guess.** `LookalikeDetector.BRANDS`
+  holds real registrable domains. Add one only after checking it is the brand's
+  own domain — a wrong entry flags the real site as an imitation of itself.
 - **No hardcoded user-facing strings.** Everything the user can read or that a
   screen reader can announce goes in `res/values/strings.xml`, including
   `contentDescription` values. See the translation section below.

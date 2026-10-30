@@ -75,7 +75,6 @@
 
     <!-- Generator -->
     <string name="generator_title">Create a QR code</string>
-    <string name="generator_generate">Generate</string>
     <string name="generator_clear">Clear the form</string>
     <string name="generator_clear_field">Clear</string>
     <string name="generator_save">Save</string>
@@ -124,16 +123,6 @@
     <string name="settings_version">Version ⁨%1$s (%2$d)⁩</string>
     <string name="settings_open_website">Open website</string>
 
-    <!-- Onboarding -->
-    <string name="onboarding_slide1_title">Fast and private</string>
-    <string name="onboarding_slide1_text">QuickQR uses your camera only for scanning. No data ever leaves your device.</string>
-    <string name="onboarding_slide2_title">Knows what it read</string>
-    <string name="onboarding_slide2_text">Links, Wi-Fi networks, contacts, emails — recognised automatically and ready to act on.</string>
-    <string name="onboarding_slide3_title">Ready to scan</string>
-    <string name="onboarding_slide3_text">Point your camera at any QR code to get started.</string>
-    <string name="onboarding_next">Next</string>
-    <string name="onboarding_start">Get started</string>
-    <string name="onboarding_skip">Skip</string>
 
     <!-- Contact and event details -->
     <string name="vcard_organization">Organisation</string>
@@ -163,4 +152,45 @@
         <item quantity="one">That content is %1$d byte — %2$d is the most a QR code can hold. Shorten it and try again.</item>
         <item quantity="other">That content is %1$d bytes — %2$d is the most a QR code can hold. Shorten it and try again.</item>
     </plurals>
+    <string name="wifi_security_sae" translatable="false">WPA3</string>
+
+    <!-- Scanner, history and payments -->
+    <string name="type_payment">Payment</string>
+    <string name="privacy_notice">Works offline — nothing you scan is uploaded.</string>
+    <string name="privacy_notice_dismiss">Dismiss</string>
+    <string name="error_image_unreadable">Could not read that image</string>
+    <string name="history_deleted">Scan deleted</string>
+    <string name="history_undo">Undo</string>
+    <string name="history_pin">Pin</string>
+    <string name="history_unpin">Unpin</string>
+
+    <!-- Link inspection -->
+    <string name="link_destination">Goes to</string>
+    <string name="link_open_anyway">Open anyway</string>
+    <string name="link_copy">Copy link</string>
+    <string name="link_checked_offline">Checked on this phone. Nothing was uploaded.</string>
+    <string name="link_flag_userinfo">The text before “@” is decoration — this link really goes to ⁨%1$s⁩</string>
+    <string name="link_flag_mixed_script">Mixes alphabets so the address looks like another one</string>
+    <string name="link_flag_lookalike">Imitates ⁨%1$s⁩ — this is a different site</string>
+    <string name="link_flag_brand_in_subdomain">Puts ⁨%1$s⁩ in front of a different site’s address</string>
+    <string name="link_flag_brand_name">Uses the name of ⁨%1$s⁩ on a site that is not theirs</string>
+    <string name="link_flag_public_ip">Goes to a bare internet address instead of a named site</string>
+    <string name="link_flag_local_ip">Goes to a device on your local network</string>
+    <string name="link_flag_confusable_script">Written in letters that only look Latin</string>
+    <string name="link_flag_insecure">Not encrypted — others on the network can read or change it</string>
+    <string name="link_flag_non_standard_port">Uses an unusual port</string>
+    <string name="link_flag_shortener">Short link — the real destination is hidden until you open it</string>
+
+    <!-- Payment codes (UPI) -->
+    <string name="action_pay">Pay with a UPI app</string>
+    <string name="payment_warning">Scanning a QR code can only send money — never receive it.</string>
+    <string name="payment_payee_name">Name in the code (not verified)</string>
+    <string name="payment_payee_address">UPI ID</string>
+    <string name="payment_amount">Amount</string>
+    <string name="payment_note">Note</string>
+    <string name="payment_flag_missing_payee">This code names nobody to pay</string>
+    <string name="payment_flag_malformed_payee">The UPI ID in this code is not valid</string>
+    <string name="payment_flag_malformed_amount">The amount in this code is not valid</string>
+    <string name="payment_flag_amount_prefilled">The amount is filled in for you — check it before you approve</string>
+    <string name="payment_flag_recurring">Sets up repeated payments, not a single one</string>
 </resources>

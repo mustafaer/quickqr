@@ -1,106 +1,27 @@
 # ============================================================
-# QuickQR — Production ProGuard / R8 Configuration
+# QuickQR — R8 configuration
 # ============================================================
+#
+# Deliberately short. Compose, CameraX, Room, DataStore and Lifecycle ship their
+# own consumer rules inside their AARs, and R8 applies them automatically. This
+# file used to add blanket keeps for androidx.compose.runtime.**,
+# androidx.camera.** and com.google.zxing.**, which stopped R8 from shrinking or
+# optimising any of them. ZXing in particular is only used to *encode*, so R8 can
+# now drop every decoder it ships.
+#
+# If a release build ever fails on a missing class, add a narrow rule for that
+# class here — never a package-wide keep without a reason written next to it.
 
-# ---- General ------------------------------------------------
--keepattributes Signature
--keepattributes *Annotation*
+# Readable stack traces in Play Console. Upload mapping.txt with each release.
 -keepattributes SourceFile,LineNumberTable
--keepattributes InnerClasses,EnclosingMethod
--keepattributes Exceptions
-
-# Preserve names for debugging crash logs (Firebase Crashlytics, Play Console)
 -renamesourcefileattribute SourceFile
 
-# ---- Kotlin -------------------------------------------------
--dontwarn kotlin.**
--dontwarn kotlinx.**
--keep class kotlin.Metadata { *; }
--keepclassmembers class kotlin.Metadata {
-    public <methods>;
-}
-# Coroutines
--keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
--keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
--keepclassmembers class kotlinx.coroutines.** {
-    volatile <fields>;
-}
-
-# ---- Room Database ------------------------------------------
--keep class * extends androidx.room.RoomDatabase
--keep @androidx.room.Entity class *
--keepclassmembers @androidx.room.Entity class * { *; }
--keep @androidx.room.Dao interface *
--keepclassmembers @androidx.room.Dao interface * { *; }
--dontwarn androidx.room.paging.**
-
-# ---- DataStore Preferences ----------------------------------
--keepclassmembers class * extends androidx.datastore.preferences.protobuf.GeneratedMessageLite {
-    <fields>;
-}
-
-# ---- Jetpack Compose ----------------------------------------
--dontwarn androidx.compose.**
-# Keep Composable functions discoverable
--keep class androidx.compose.runtime.** { *; }
-
-# ---- ML Kit (Barcode Scanning) ------------------------------
+# ---- ML Kit -----------------------------------------------------------------
+# ML Kit discovers its components by reflection, from class names in manifest
+# metadata that R8 cannot see. Without these rules BarcodeScanning.getClient()
+# throws a NullPointerException in release builds only — debug builds, which are
+# not minified, work fine, so this is easy to break without noticing.
 -keep class com.google.mlkit.** { *; }
 -dontwarn com.google.mlkit.**
 -keep class com.google.android.gms.internal.mlkit_vision_barcode.** { *; }
 -dontwarn com.google.android.gms.internal.mlkit_vision_barcode.**
-
-# ---- ZXing (QR Code Generation) -----------------------------
--keep class com.google.zxing.** { *; }
--dontwarn com.google.zxing.**
-
-# ---- CameraX ------------------------------------------------
--keep class androidx.camera.** { *; }
--dontwarn androidx.camera.**
-
-# ---- AndroidX Lifecycle / ViewModel -------------------------
--keep class * extends androidx.lifecycle.ViewModel {
-    <init>(...);
-}
--keep class * extends androidx.lifecycle.AndroidViewModel {
-    <init>(android.app.Application);
-}
-
-# ---- Google Play Core (SplashScreen, etc.) -------------------
--keep class androidx.core.splashscreen.** { *; }
-
-# ---- Prevent R8 from stripping data classes -----------------
--keepclassmembers class net.mustafaer.quickqr.data.** {
-    <init>(...);
-    <fields>;
-}
-
-# ---- Keep FileProvider paths --------------------------------
--keep class androidx.core.content.FileProvider { *; }
-
-# ---- Enum safety --------------------------------------------
--keepclassmembers enum * {
-    public static **[] values();
-    public static ** valueOf(java.lang.String);
-}
-
-# ---- Serializable / Parcelable -----------------------------
--keepclassmembers class * implements java.io.Serializable {
-    static final long serialVersionUID;
-    private static final java.io.ObjectStreamField[] serialPersistentFields;
-    private void writeObject(java.io.ObjectOutputStream);
-    private void readObject(java.io.ObjectInputStream);
-    java.lang.Object writeReplace();
-    java.lang.Object readResolve();
-}
--keep class * implements android.os.Parcelable {
-    public static final ** CREATOR;
-}
-
-# ---- Remove Log calls in release builds ---------------------
--assumenosideeffects class android.util.Log {
-    public static boolean isLoggable(java.lang.String, int);
-    public static int v(...);
-    public static int d(...);
-    public static int i(...);
-}

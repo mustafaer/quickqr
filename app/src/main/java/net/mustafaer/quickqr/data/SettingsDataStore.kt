@@ -13,16 +13,36 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
+/** User settings, as the ViewModels see them. */
+interface SettingsRepository {
+    val hapticEnabled: Flow<Boolean>
+    val continuousMode: Flow<Boolean>
+    val privacyNoticeSeen: Flow<Boolean>
+    val themeMode: Flow<ThemeMode>
+    val dynamicColor: Flow<Boolean>
+
+    suspend fun setHapticEnabled(enabled: Boolean)
+    suspend fun setContinuousMode(enabled: Boolean)
+    suspend fun setPrivacyNoticeSeen()
+    suspend fun setThemeMode(mode: ThemeMode)
+    suspend fun setDynamicColor(enabled: Boolean)
+}
+
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "quickqr_settings")
 
-class SettingsDataStore(private val context: Context) {
+class SettingsDataStore(private val context: Context) : SettingsRepository {
 
-    companion object {
-        private val KEY_HAPTIC_ENABLED = booleanPreferencesKey("haptic_enabled")
-        private val KEY_CONTINUOUS_MODE = booleanPreferencesKey("continuous_mode")
-        private val KEY_ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
-        private val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
-        private val KEY_DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+    private companion object {
+        val KEY_HAPTIC_ENABLED = booleanPreferencesKey("haptic_enabled")
+        val KEY_CONTINUOUS_MODE = booleanPreferencesKey("continuous_mode")
+
+        /**
+         * Stored under the key the old onboarding carousel used: anyone who went
+         * through it has already read the privacy promise the notice repeats.
+         */
+        val KEY_PRIVACY_NOTICE_SEEN = booleanPreferencesKey("onboarding_complete")
+        val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
+        val KEY_DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
     }
 
     /**
@@ -37,33 +57,33 @@ class SettingsDataStore(private val context: Context) {
             }
             .map(transform)
 
-    val hapticEnabledFlow: Flow<Boolean> = read { it[KEY_HAPTIC_ENABLED] ?: true }
+    override val hapticEnabled: Flow<Boolean> = read { it[KEY_HAPTIC_ENABLED] ?: true }
 
-    val continuousModeFlow: Flow<Boolean> = read { it[KEY_CONTINUOUS_MODE] ?: false }
+    override val continuousMode: Flow<Boolean> = read { it[KEY_CONTINUOUS_MODE] ?: false }
 
-    val onboardingCompleteFlow: Flow<Boolean> = read { it[KEY_ONBOARDING_COMPLETE] ?: false }
+    override val privacyNoticeSeen: Flow<Boolean> = read { it[KEY_PRIVACY_NOTICE_SEEN] ?: false }
 
-    val themeModeFlow: Flow<ThemeMode> = read { ThemeMode.fromStorageKey(it[KEY_THEME_MODE]) }
+    override val themeMode: Flow<ThemeMode> = read { ThemeMode.fromStorageKey(it[KEY_THEME_MODE]) }
 
-    val dynamicColorFlow: Flow<Boolean> = read { it[KEY_DYNAMIC_COLOR] ?: false }
+    override val dynamicColor: Flow<Boolean> = read { it[KEY_DYNAMIC_COLOR] ?: false }
 
-    suspend fun setHapticEnabled(enabled: Boolean) {
+    override suspend fun setHapticEnabled(enabled: Boolean) {
         context.dataStore.edit { it[KEY_HAPTIC_ENABLED] = enabled }
     }
 
-    suspend fun setContinuousMode(enabled: Boolean) {
+    override suspend fun setContinuousMode(enabled: Boolean) {
         context.dataStore.edit { it[KEY_CONTINUOUS_MODE] = enabled }
     }
 
-    suspend fun setOnboardingComplete(complete: Boolean) {
-        context.dataStore.edit { it[KEY_ONBOARDING_COMPLETE] = complete }
+    override suspend fun setPrivacyNoticeSeen() {
+        context.dataStore.edit { it[KEY_PRIVACY_NOTICE_SEEN] = true }
     }
 
-    suspend fun setThemeMode(mode: ThemeMode) {
+    override suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { it[KEY_THEME_MODE] = mode.storageKey }
     }
 
-    suspend fun setDynamicColor(enabled: Boolean) {
+    override suspend fun setDynamicColor(enabled: Boolean) {
         context.dataStore.edit { it[KEY_DYNAMIC_COLOR] = enabled }
     }
 }

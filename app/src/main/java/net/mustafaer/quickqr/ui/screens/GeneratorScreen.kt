@@ -8,10 +8,27 @@ import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -25,14 +42,28 @@ import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.pluralStringResource
@@ -46,29 +77,33 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import net.mustafaer.quickqr.R
+import net.mustafaer.quickqr.ui.components.QrCanvas
 import net.mustafaer.quickqr.utils.QrPayloadDraft
 import net.mustafaer.quickqr.utils.QrPayloadType
 import net.mustafaer.quickqr.utils.QrResult
 import net.mustafaer.quickqr.utils.WifiSecurity
 
+/**
+ * The preview updates as the user types, so there is no Generate button — the
+ * form *is* the editor and the symbol below it is always current.
+ */
 @Composable
 fun GeneratorScreen(
     draft: QrPayloadDraft,
     result: QrResult,
     onDraftChange: (QrPayloadDraft) -> Unit,
-    onGenerate: () -> Unit,
     onClear: () -> Unit,
     onSave: suspend () -> Uri?,
     onShare: suspend () -> Uri?,
+    snackbarHostState: SnackbarHostState,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     val savedMsg = stringResource(R.string.generator_saved)
     val saveFailedMsg = stringResource(R.string.generator_save_failed)
@@ -76,102 +111,75 @@ fun GeneratorScreen(
     val storagePermissionMsg = stringResource(R.string.error_storage_permission)
     val shareChooserTitle = stringResource(R.string.generator_share_title)
 
-    fun notify(message: String) = scope.launch {
-        snackbarHostState.currentSnackbarData?.dismiss()
-        snackbarHostState.showSnackbar(message)
-    }
-
-    fun save() = scope.launch {
-        notify(if (onSave() != null) savedMsg else saveFailedMsg)
+    fun save() {
+        scope.launch { scope.showMessage(snackbarHostState, if (onSave() != null) savedMsg else saveFailedMsg) }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if (isGranted) save() else notify(storagePermissionMsg)
+        if (isGranted) save() else scope.showMessage(snackbarHostState, storagePermissionMsg)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(contentPadding)
-                .padding(horizontal = 24.dp)
-                .verticalScroll(scrollState),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = stringResource(R.string.generator_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 24.dp, bottom = 16.dp)
-            )
+    val hasInput = draft != QrPayloadDraft(type = draft.type)
 
-            ContentTypeSelector(
-                selected = draft.type,
-                onSelect = { type -> onDraftChange(draft.copy(type = type)) }
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(contentPadding)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.generator_title),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 24.dp, bottom = 16.dp)
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        ContentTypeSelector(
+            selected = draft.type,
+            onSelect = { type -> onDraftChange(draft.copy(type = type)) }
+        )
 
-            PayloadForm(
-                draft = draft,
-                onDraftChange = onDraftChange,
-                onSubmit = {
+        Spacer(modifier = Modifier.height(16.dp))
+
+        PayloadForm(
+            draft = draft,
+            onDraftChange = onDraftChange,
+            onDone = { focusManager.clearFocus() }
+        )
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            TextButton(
+                onClick = {
                     focusManager.clearFocus()
-                    onGenerate()
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    onClear()
+                },
+                enabled = hasInput
             ) {
-                Button(
-                    onClick = {
-                        focusManager.clearFocus()
-                        onGenerate()
-                    },
-                    enabled = draft.isComplete,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(Icons.Outlined.QrCode, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.generator_generate),
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                OutlinedButton(
-                    onClick = {
-                        focusManager.clearFocus()
-                        onClear()
-                    },
-                    enabled = draft.isComplete,
-                    modifier = Modifier.height(50.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(
-                        Icons.Outlined.Close,
-                        contentDescription = stringResource(R.string.generator_clear)
-                    )
-                }
+                Icon(Icons.Outlined.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.generator_clear))
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-            when (result) {
+        AnimatedContent(
+            targetState = result,
+            contentKey = { it::class },
+            transitionSpec = {
+                (fadeIn() + scaleIn(initialScale = 0.96f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)))
+                    .togetherWith(fadeOut())
+            },
+            label = "generatorResult"
+        ) { current ->
+            when (current) {
                 is QrResult.Success -> QrPreviewCard(
-                    result = result,
+                    result = current,
                     onSaveClick = {
                         // Below Android 10 there is no scoped-storage collection to
                         // write into, so the legacy permission is still required.
@@ -190,7 +198,7 @@ fun GeneratorScreen(
                         scope.launch {
                             val shareUri = onShare()
                             if (shareUri == null) {
-                                notify(shareFailedMsg)
+                                scope.showMessage(snackbarHostState, shareFailedMsg)
                                 return@launch
                             }
                             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -200,10 +208,8 @@ fun GeneratorScreen(
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
                             runCatching {
-                                context.startActivity(
-                                    Intent.createChooser(intent, shareChooserTitle)
-                                )
-                            }.onFailure { notify(shareFailedMsg) }
+                                context.startActivity(Intent.createChooser(intent, shareChooserTitle))
+                            }.onFailure { scope.showMessage(snackbarHostState, shareFailedMsg) }
                         }
                     }
                 )
@@ -212,9 +218,9 @@ fun GeneratorScreen(
                     isError = true,
                     message = pluralStringResource(
                         R.plurals.generator_error_too_long,
-                        result.byteCount,
-                        result.byteCount,
-                        result.maxBytes
+                        current.byteCount,
+                        current.byteCount,
+                        current.maxBytes
                     )
                 )
 
@@ -228,16 +234,17 @@ fun GeneratorScreen(
                     message = stringResource(R.string.generator_empty_subtitle)
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
 
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(contentPadding)
-        )
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+/** Replaces whatever snackbar is showing rather than queueing behind it. */
+internal fun CoroutineScope.showMessage(host: SnackbarHostState, message: String) {
+    launch {
+        host.currentSnackbarData?.dismiss()
+        host.showSnackbar(message)
     }
 }
 
@@ -246,11 +253,10 @@ private fun ContentTypeSelector(
     selected: QrPayloadType,
     onSelect: (QrPayloadType) -> Unit
 ) {
-    val scrollState = rememberScrollState()
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(scrollState),
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         QrPayloadType.entries.forEach { type ->
@@ -258,7 +264,7 @@ private fun ContentTypeSelector(
                 selected = type == selected,
                 onClick = { onSelect(type) },
                 label = { Text(stringResource(type.labelRes())) },
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(12.dp)
             )
         }
     }
@@ -277,7 +283,7 @@ private fun QrPayloadType.labelRes(): Int = when (this) {
 private fun PayloadForm(
     draft: QrPayloadDraft,
     onDraftChange: (QrPayloadDraft) -> Unit,
-    onSubmit: () -> Unit
+    onDone: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -298,7 +304,7 @@ private fun PayloadForm(
                 onValueChange = { onDraftChange(draft.copy(url = it)) },
                 label = stringResource(R.string.generator_field_url),
                 keyboardType = KeyboardType.Uri,
-                onSubmit = onSubmit
+                onDone = onDone
             )
 
             QrPayloadType.WIFI -> {
@@ -317,7 +323,7 @@ private fun PayloadForm(
                         onValueChange = { onDraftChange(draft.copy(wifiPassword = it)) },
                         label = stringResource(R.string.generator_field_password),
                         isPassword = true,
-                        onSubmit = onSubmit
+                        onDone = onDone
                     )
                 }
                 Row(
@@ -363,7 +369,7 @@ private fun PayloadForm(
                 onValueChange = { onDraftChange(draft.copy(phoneNumber = it)) },
                 label = stringResource(R.string.generator_field_phone),
                 keyboardType = KeyboardType.Phone,
-                onSubmit = onSubmit
+                onDone = onDone
             )
 
             QrPayloadType.SMS -> {
@@ -396,7 +402,7 @@ private fun GeneratorField(
     isPassword: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
     imeAction: ImeAction = ImeAction.Next,
-    onSubmit: (() -> Unit)? = null
+    onDone: (() -> Unit)? = null
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -418,14 +424,9 @@ private fun GeneratorField(
             when {
                 isPassword -> IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
-                        imageVector = if (passwordVisible) {
-                            Icons.Outlined.VisibilityOff
-                        } else {
-                            Icons.Outlined.Visibility
-                        },
+                        imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                         contentDescription = stringResource(
-                            if (passwordVisible) R.string.wifi_hide_password
-                            else R.string.wifi_show_password
+                            if (passwordVisible) R.string.wifi_hide_password else R.string.wifi_show_password
                         )
                     )
                 }
@@ -438,14 +439,11 @@ private fun GeneratorField(
             }
         },
         keyboardOptions = KeyboardOptions(
-            keyboardType = keyboardType,
-            imeAction = if (onSubmit != null) ImeAction.Done else imeAction
+            keyboardType = if (isPassword) KeyboardType.Password else keyboardType,
+            imeAction = if (onDone != null) ImeAction.Done else imeAction
         ),
         keyboardActions = KeyboardActions(
-            onDone = {
-                focusManager.clearFocus()
-                onSubmit?.invoke()
-            },
+            onDone = { onDone?.invoke() ?: focusManager.clearFocus() },
             onNext = { focusManager.moveFocus(FocusDirection.Down) }
         )
     )
@@ -461,15 +459,18 @@ private fun WifiSecuritySelector(
             text = stringResource(R.string.wifi_security),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 6.dp)
+            modifier = Modifier.padding(bottom = 8.dp)
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             WifiSecurity.entries.forEach { security ->
                 FilterChip(
                     selected = security == selected,
                     onClick = { onSelect(security) },
                     label = { Text(stringResource(security.labelRes())) },
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(12.dp)
                 )
             }
         }
@@ -478,6 +479,7 @@ private fun WifiSecuritySelector(
 
 private fun WifiSecurity.labelRes(): Int = when (this) {
     WifiSecurity.WPA -> R.string.wifi_security_wpa
+    WifiSecurity.SAE -> R.string.wifi_security_sae
     WifiSecurity.WEP -> R.string.wifi_security_wep
     WifiSecurity.NONE -> R.string.wifi_security_open
 }
@@ -488,13 +490,9 @@ private fun QrPreviewCard(
     onSaveClick: () -> Unit,
     onShareClick: () -> Unit
 ) {
-    // Converting the bitmap once per bitmap rather than once per recomposition.
-    val imageBitmap = remember(result.bitmap) { result.bitmap.asImageBitmap() }
-
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(24.dp)
     ) {
         Column(
@@ -505,17 +503,15 @@ private fun QrPreviewCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(240.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .size(248.dp)
                     // Always a white quiet zone: a QR on a themed background is a
                     // QR some scanners refuse to read.
-                    .background(Color.White)
-                    .padding(16.dp)
+                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .padding(12.dp)
             ) {
-                Image(
-                    bitmap = imageBitmap,
-                    contentDescription = stringResource(R.string.generator_qr_image),
-                    modifier = Modifier.fillMaxSize()
+                QrCanvas(
+                    matrix = result.matrix,
+                    contentDescription = stringResource(R.string.generator_qr_image)
                 )
             }
 
@@ -523,7 +519,7 @@ private fun QrPreviewCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Default button content padding is 24dp a side, which left too
                 // little room for a label plus icon once the text was German or
@@ -534,19 +530,15 @@ private fun QrPreviewCard(
                     onClick = onSaveClick,
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp),
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = tightPadding,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 ) {
-                    Icon(
-                        Icons.Outlined.Save,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Icon(Icons.Outlined.Save, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = stringResource(R.string.generator_save),
@@ -559,15 +551,11 @@ private fun QrPreviewCard(
                     onClick = onShareClick,
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp),
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = tightPadding
                 ) {
-                    Icon(
-                        Icons.Outlined.Share,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Icon(Icons.Outlined.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = stringResource(R.string.generator_share),
@@ -582,40 +570,38 @@ private fun QrPreviewCard(
 
 @Composable
 private fun GeneratorMessage(isError: Boolean, message: String) {
-    val tint = if (isError) {
-        MaterialTheme.colorScheme.error
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-    }
-    Box(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(260.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                if (isError) {
-                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f)
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                }
-            ),
-        contentAlignment = Alignment.Center
+            .height(248.dp),
+        color = if (isError) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
+        contentColor = if (isError) {
+            MaterialTheme.colorScheme.onErrorContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        shape = RoundedCornerShape(24.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 32.dp)
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 32.dp)
         ) {
             Icon(
                 imageVector = if (isError) Icons.Outlined.ErrorOutline else Icons.Outlined.QrCode,
                 contentDescription = null,
-                modifier = Modifier.size(if (isError) 48.dp else 64.dp),
-                tint = if (isError) tint else tint.copy(alpha = 0.4f)
+                modifier = Modifier.size(if (isError) 48.dp else 64.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = tint,
                 textAlign = TextAlign.Center
             )
         }

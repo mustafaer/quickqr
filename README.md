@@ -15,10 +15,12 @@ QuickQR is a lightweight QR code scanner, barcode reader, and QR generator for A
 ## ✨ Features
 
 - ⚡ **Fast scanning** — Google ML Kit reads QR codes and common 1D/2D barcodes straight from the camera preview, or from an image in your gallery.
-- 🧠 **Knows what it read** — Links, Wi-Fi networks, contacts (vCard/MECARD), calendar events, emails, phone numbers, SMS and geo coordinates are recognised automatically, with the right action offered for each: join the network, add the contact, save the event, dial, or open.
-- 🎨 **QR generator** — Build codes for plain text, links, Wi-Fi credentials, email, phone numbers and SMS from purpose-built forms. Save to your gallery or share directly.
-- 🔒 **Private by construction** — No `INTERNET` permission, so nothing can be uploaded even in principle. History and settings never leave the device.
-- 📁 **Searchable history** — The last 100 scans, stored locally, searchable in every supported language, exportable to CSV or JSON.
+- 🧠 **Knows what it read** — Links, Wi-Fi networks (including WPA3), contacts (vCard/MECARD), calendar events, UPI payment codes, emails, phone numbers, SMS and geo coordinates are recognised automatically, with the right action offered for each: join the network, add the contact, save the event, pay, dial, or open.
+- 🛡️ **Checks links before you open them** — Every scanned link is inspected on the device: the real destination is shown first, and look-alike domains (`paypa1.com`, Cyrillic `аpple.com`), brand names placed in front of someone else's site (`paypal.com.secure-login.xyz`), hidden `user@host` tricks, bare IP addresses and short links are called out. Nothing is uploaded to check it.
+- 💸 **Safe UPI payments** — A UPI code shows who is being paid and how much, and reminds you that scanning a QR can only ever send money.
+- 🎨 **QR generator** — Build codes for plain text, links, Wi-Fi credentials, email, phone numbers and SMS from purpose-built forms, with a live preview. Error correction is picked automatically: the strongest level that keeps the code small, and up to 2,953 bytes of content. Save a sharp, print-ready PNG to your gallery or share it directly.
+- 🔒 **Private by construction** — No `INTERNET` permission, so nothing can be uploaded even in principle. Scan history is excluded from Google's cloud backup; it only moves in a direct device-to-device transfer you start yourself. Settings are backed up.
+- 📁 **Searchable history** — The last 100 scans plus any you pin, stored locally, searchable in every supported language, exportable to CSV or JSON. Deleting a scan can be undone.
 - 🌍 **Five languages** — English, Turkish, German, Hindi and Arabic, with full right-to-left support and per-app language selection on Android 13+.
 - 🌗 **Material 3** — Light, dark or system theme, with optional Material You wallpaper colours on Android 12+.
 
@@ -74,13 +76,15 @@ quickqr/
 │       ├── main/
 │       │   ├── AndroidManifest.xml
 │       │   ├── java/net/mustafaer/quickqr/
-│       │   │   ├── data/         # Room, DAO, DataStore, AppLanguage, ThemeMode
+│       │   │   ├── data/         # Room, repositories, DataStore, media export, gallery reader
 │       │   │   ├── ui/
 │       │   │   │   ├── screens/
-│       │   │   │   ├── components/
+│       │   │   │   ├── components/   # Camera, viewfinder, result sheet, QR canvas
 │       │   │   │   ├── theme/
-│       │   │   │   └── viewmodel/
-│       │   │   ├── utils/        # Parsing, generation, export — no Android deps
+│       │   │   │   └── viewmodel/    # One ViewModel per tab
+│       │   │   ├── utils/        # Parsing, link inspection, encoding, export — no Android deps
+│       │   │   ├── AppContainer.kt   # Manual dependency injection
+│       │   │   ├── QuickQrApp.kt
 │       │   │   └── MainActivity.kt
 │       │   └── res/              # Strings in 5 languages, backup rules, locales
 │       └── test/                 # JVM unit tests for the utils layer
@@ -89,7 +93,9 @@ quickqr/
 ```
 
 The `utils` package is deliberately free of Android framework types so parsing,
-payload building and export logic can be covered by plain JVM unit tests.
+link inspection, QR encoding, payload building and export logic can be covered by
+plain JVM unit tests. The ViewModels take their collaborators through
+constructors, so they are tested the same way with fakes.
 
 ## 🤝 Contributing
 

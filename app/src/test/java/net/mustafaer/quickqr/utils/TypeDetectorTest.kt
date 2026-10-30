@@ -82,7 +82,7 @@ class TypeDetectorTest {
     @Test
     fun `smsto payloads become sms uris with an encoded body`() {
         assertEquals(
-            "sms:+15551234567?body=hello+there",
+            "sms:+15551234567?body=hello%20there",
             TypeDetector.getActionUrl("SMSTO:+15551234567:hello there", ScanResultType.SMS)
         )
         assertEquals(
@@ -98,8 +98,8 @@ class TypeDetectorTest {
             ScanResultType.EMAIL
         )
         assertTrue(url.startsWith("mailto:ada@example.com?"))
-        assertTrue(url.contains("subject=Hi+there"))
-        assertTrue(url.contains("body=How+are+you%3F"))
+        assertTrue(url.contains("subject=Hi%20there"))
+        assertTrue(url.contains("body=How%20are%20you%3F"))
     }
 
     // --- Wi-Fi ---------------------------------------------------------------
@@ -272,5 +272,40 @@ class TypeDetectorTest {
         }
         // And an explicit Z is the same wall clock three hours later.
         assertEquals(expected, TypeDetector.parseEventTime("DTSTART:20260825T060000Z", "DTSTART"))
+    }
+
+    /**
+     * Regression: a floating time with a `TZID` parameter was read as device-local
+     * time, so an event written for Berlin moved by however far the phone was
+     * from Berlin.
+     */
+    @Test
+    fun `a TZID parameter places a floating time in that zone`() {
+        // 2026-07-15T10:00 in Berlin is CEST, UTC+2: 08:00Z.
+        assertEquals(
+            1784102400000L,
+            TypeDetector.parseEventTime("DTSTART;TZID=Europe/Berlin:20260715T100000", "DTSTART")
+        )
+        // An explicit offset still wins over the parameter.
+        assertEquals(
+            1784102400000L,
+            TypeDetector.parseEventTime("DTSTART;TZID=Asia/Tokyo:20260715T080000Z", "DTSTART")
+        )
+    }
+
+    @Test
+    fun `an unknown TZID falls back to device time instead of silently using GMT`() {
+        // The test JVM is pinned to UTC, so device time and GMT agree here; what
+        // matters is that the unknown ID neither throws nor drops the value.
+        assertEquals(
+            1784109600000L,
+            TypeDetector.parseEventTime("DTSTART;TZID=Mars/Olympus_Mons:20260715T100000", "DTSTART")
+        )
+    }
+
+    @Test
+    fun `upi codes are payments, not links with user info`() {
+        assertEquals(ScanResultType.PAYMENT, TypeDetector.detect("upi://pay?pa=shop@okaxis&pn=Shop"))
+        assertEquals(ScanResultType.PAYMENT, TypeDetector.detect("UPI://mandate?pa=x@ybl"))
     }
 }

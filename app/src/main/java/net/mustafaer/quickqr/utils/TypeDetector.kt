@@ -3,6 +3,7 @@ package net.mustafaer.quickqr.utils
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
 
 enum class ScanResultType(val typeStr: String) {
     URL("url"),
@@ -13,6 +14,7 @@ enum class ScanResultType(val typeStr: String) {
     SMS("sms"),
     VCARD("vcard"),
     CALENDAR("calendar"),
+    PAYMENT("payment"),
     TEXT("text");
 
     companion object {
@@ -141,6 +143,10 @@ object TypeDetector {
 
             t.startsWith("BEGIN:VCALENDAR", ignoreCase = true) ||
                 t.startsWith("BEGIN:VEVENT", ignoreCase = true) -> ScanResultType.CALENDAR
+
+            // Checked before the link patterns: `upi://pay?pa=name@bank` carries an
+            // `@` and would otherwise be read as a URL with user info.
+            t.startsWith("upi://", ignoreCase = true) -> ScanResultType.PAYMENT
 
             // Checked before the e-mail branch: `https://user@host.tld` is a link,
             // not an address, and the e-mail pattern would happily match it.
@@ -358,9 +364,11 @@ object TypeDetector {
         // never captured, the value silently fell back to a zone-less local time,
         // and the padding further down was unreachable.
         val timeRegex =
-            ("^$key(?:;[^:]*)?:([\\d\\-]+(?:T[\\d:]+(?:Z|[+-]\\d{2}(?::?\\d{2})?)?)?)")
+            ("^$key((?:;[^:]*)?):([\\d\\-]+(?:T[\\d:]+(?:Z|[+-]\\d{2}(?::?\\d{2})?)?)?)")
                 .toRegex(MULTILINE_CI)
-        val timeStr = timeRegex.find(text)?.groupValues?.get(1) ?: return null
+        val match = timeRegex.find(text) ?: return null
+        val timeStr = match.groupValues[2]
+        val zone = tzidZone(match.groupValues[1])
         return try {
             if (timeStr.contains("T", ignoreCase = true)) {
                 val parts = timeStr.split("T", ignoreCase = true)
@@ -394,7 +402,11 @@ object TypeDetector {
                 if (finalZone.isNotEmpty()) {
                     SimpleDateFormat("yyyyMMdd'T'HHmmssZ", Locale.US).parse(normalized)?.time
                 } else {
-                    SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.US).parse(normalized)?.time
+                    // A floating time is local to the TZID the writer named, and to
+                    // the device only when it named none.
+                    SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.US)
+                        .apply { zone?.let { timeZone = it } }
+                        .parse(normalized)?.time
                 }
             } else {
                 SimpleDateFormat("yyyyMMdd", Locale.US).parse(timeStr.replace("-", ""))?.time
@@ -402,6 +414,18 @@ object TypeDetector {
         } catch (_: Exception) {
             null
         }
+    }
+
+    private val tzidRegex = "TZID=\"?([^;:\"]+)".toRegex(RegexOption.IGNORE_CASE)
+
+    /**
+     * The zone a `TZID=` parameter names, or null when there is none or the JVM
+     * does not know it. `TimeZone.getTimeZone` answers an unknown ID with GMT
+     * rather than failing, which would silently shift the event.
+     */
+    private fun tzidZone(params: String): TimeZone? {
+        val id = tzidRegex.find(params)?.groupValues?.get(1)?.trim() ?: return null
+        return TimeZone.getTimeZone(id).takeIf { it.id == id }
     }
 
     // --- Shared helpers ------------------------------------------------------
@@ -478,9 +502,15 @@ object TypeDetector {
 
     private fun String.collapseSpaces(): String = replace(Regex("\\s+"), " ").trim()
 
-    private fun urlEncode(str: String): String =
+    /**
+     * Percent-encoding for `mailto:` and `sms:` query values. [URLEncoder] is a
+     * form encoder and writes a space as `+`, which RFC 6068 readers show as a
+     * literal plus. A literal `+` in the input is already `%2B` by this point, so
+     * the replacement only ever touches spaces.
+     */
+    internal fun urlEncode(str: String): String =
         try {
-            URLEncoder.encode(str, "UTF-8")
+            URLEncoder.encode(str, "UTF-8").replace("+", "%20")
         } catch (_: Exception) {
             str
         }

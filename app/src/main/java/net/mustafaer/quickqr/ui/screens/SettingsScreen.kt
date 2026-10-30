@@ -22,7 +22,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -31,33 +30,30 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import kotlinx.coroutines.launch
 import net.mustafaer.quickqr.BuildConfig
 import net.mustafaer.quickqr.R
 import net.mustafaer.quickqr.data.AppLanguage
 import net.mustafaer.quickqr.data.ThemeMode
+import net.mustafaer.quickqr.ui.viewmodel.SettingsState
 
 private const val PRIVACY_POLICY_URL = "https://medevstudios.com/quickqr/privacy-policy.html"
 private const val STUDIO_URL = "https://medevstudios.com/"
 
 @Composable
 fun SettingsScreen(
-    hapticEnabled: Boolean,
-    continuousMode: Boolean,
+    state: SettingsState,
     language: AppLanguage,
-    themeMode: ThemeMode,
-    dynamicColor: Boolean,
     onHapticToggle: (Boolean) -> Unit,
     onContinuousToggle: (Boolean) -> Unit,
     onLanguageSelect: (AppLanguage) -> Unit,
     onThemeModeSelect: (ThemeMode) -> Unit,
     onDynamicColorToggle: (Boolean) -> Unit,
+    snackbarHostState: SnackbarHostState,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
-    val snackbarHostState = remember { SnackbarHostState() }
     var showLanguageMenu by rememberSaveable { mutableStateOf(false) }
     var showThemeMenu by rememberSaveable { mutableStateOf(false) }
 
@@ -68,16 +64,10 @@ fun SettingsScreen(
         // A device with no browser used to make this tap do nothing at all.
         runCatching {
             context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
-        }.onFailure {
-            scope.launch {
-                snackbarHostState.currentSnackbarData?.dismiss()
-                snackbarHostState.showSnackbar(noBrowserMsg)
-            }
-        }
+        }.onFailure { scope.showMessage(snackbarHostState, noBrowserMsg) }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
+    Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
@@ -96,19 +86,17 @@ fun SettingsScreen(
             SettingsGroup {
                 SettingSwitchRow(
                     icon = Icons.Outlined.Vibration,
-                    iconColor = Color(0xFF1E88E5),
                     title = stringResource(R.string.settings_haptic),
                     description = stringResource(R.string.settings_haptic_desc),
-                    checked = hapticEnabled,
+                    checked = state.hapticEnabled,
                     onCheckedChange = onHapticToggle
                 )
                 SettingsDivider()
                 SettingSwitchRow(
                     icon = Icons.Outlined.Sync,
-                    iconColor = Color(0xFF43A047),
                     title = stringResource(R.string.settings_continuous),
                     description = stringResource(R.string.settings_continuous_desc),
-                    checked = continuousMode,
+                    checked = state.continuousMode,
                     onCheckedChange = onContinuousToggle
                 )
             }
@@ -119,9 +107,8 @@ fun SettingsScreen(
                 // Theme
                 SettingMenuRow(
                     icon = Icons.Outlined.DarkMode,
-                    iconColor = Color(0xFF5B3FF2),
                     title = stringResource(R.string.settings_theme),
-                    valueLabel = stringResource(themeMode.labelRes()),
+                    valueLabel = stringResource(state.themeMode.labelRes()),
                     expanded = showThemeMenu,
                     onExpandedChange = { showThemeMenu = it }
                 ) {
@@ -129,7 +116,7 @@ fun SettingsScreen(
                         DropdownMenuItem(
                             text = { Text(stringResource(mode.labelRes())) },
                             trailingIcon = {
-                                if (mode == themeMode) {
+                                if (mode == state.themeMode) {
                                     Icon(Icons.Outlined.Check, contentDescription = null)
                                 }
                             },
@@ -145,10 +132,9 @@ fun SettingsScreen(
                     SettingsDivider()
                     SettingSwitchRow(
                         icon = Icons.Outlined.ColorLens,
-                        iconColor = Color(0xFFE5A93B),
                         title = stringResource(R.string.settings_dynamic_color),
                         description = stringResource(R.string.settings_dynamic_color_desc),
-                        checked = dynamicColor,
+                        checked = state.dynamicColor,
                         onCheckedChange = onDynamicColorToggle
                     )
                 }
@@ -159,7 +145,6 @@ fun SettingsScreen(
                 // readable to someone who cannot read the language in use.
                 SettingMenuRow(
                     icon = Icons.Outlined.Language,
-                    iconColor = Color(0xFF8E24AA),
                     title = stringResource(R.string.settings_language),
                     valueLabel = language.displayName,
                     expanded = showLanguageMenu,
@@ -209,7 +194,7 @@ fun SettingsScreen(
                         BuildConfig.VERSION_CODE
                     ),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
@@ -239,13 +224,6 @@ fun SettingsScreen(
             }
         }
 
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(contentPadding)
-        )
-    }
 }
 
 private fun ThemeMode.labelRes(): Int = when (this) {
@@ -258,9 +236,8 @@ private fun ThemeMode.labelRes(): Int = when (this) {
 private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(content = content)
     }
@@ -275,22 +252,21 @@ private fun SettingsDivider() {
 }
 
 @Composable
-private fun SettingIcon(icon: ImageVector, iconColor: Color) {
+private fun SettingIcon(icon: ImageVector) {
     Box(
         modifier = Modifier
             .size(40.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(iconColor.copy(alpha = 0.1f)),
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer),
         contentAlignment = Alignment.Center
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = iconColor)
+        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
     }
 }
 
 @Composable
 fun SettingSwitchRow(
     icon: ImageVector,
-    iconColor: Color,
     title: String,
     description: String,
     checked: Boolean,
@@ -303,7 +279,7 @@ fun SettingSwitchRow(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        SettingIcon(icon, iconColor)
+        SettingIcon(icon)
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -314,7 +290,7 @@ fun SettingSwitchRow(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         Switch(
@@ -331,7 +307,6 @@ fun SettingSwitchRow(
 @Composable
 private fun SettingMenuRow(
     icon: ImageVector,
-    iconColor: Color,
     title: String,
     valueLabel: String,
     expanded: Boolean,
@@ -345,7 +320,7 @@ private fun SettingMenuRow(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        SettingIcon(icon, iconColor)
+        SettingIcon(icon)
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = title,

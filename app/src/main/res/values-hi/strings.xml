@@ -70,7 +70,6 @@
 
     <!-- जनरेटर -->
     <string name="generator_title">QR कोड बनाएँ</string>
-    <string name="generator_generate">बनाएँ</string>
     <string name="generator_clear">फ़ॉर्म खाली करें</string>
     <string name="generator_clear_field">हटाएँ</string>
     <string name="generator_save">सेव करें</string>
@@ -120,15 +119,6 @@
     <string name="settings_open_website">वेबसाइट खोलें</string>
 
     <!-- परिचय -->
-    <string name="onboarding_slide1_title">तेज़ और निजी</string>
-    <string name="onboarding_slide1_text">QuickQR आपके कैमरे का इस्तेमाल सिर्फ़ स्कैन करने के लिए करता है। कोई डेटा आपके डिवाइस से बाहर नहीं जाता।</string>
-    <string name="onboarding_slide2_title">पहचानता है कि क्या पढ़ा</string>
-    <string name="onboarding_slide2_text">लिंक, Wi-Fi नेटवर्क, संपर्क, ईमेल — अपने आप पहचाने जाते हैं और तुरंत इस्तेमाल के लिए तैयार रहते हैं।</string>
-    <string name="onboarding_slide3_title">स्कैन के लिए तैयार</string>
-    <string name="onboarding_slide3_text">शुरू करने के लिए अपना कैमरा किसी भी QR कोड की ओर करें।</string>
-    <string name="onboarding_next">आगे</string>
-    <string name="onboarding_start">शुरू करें</string>
-    <string name="onboarding_skip">छोड़ें</string>
 
     <!-- संपर्क और इवेंट की जानकारी -->
     <string name="vcard_organization">संस्था</string>
@@ -156,4 +146,41 @@
         <item quantity="one">यह सामग्री %1$d बाइट की है — एक QR कोड में ज़्यादा से ज़्यादा %2$d आते हैं। इसे छोटा करके फिर कोशिश करें।</item>
         <item quantity="other">यह सामग्री %1$d बाइट की है — एक QR कोड में ज़्यादा से ज़्यादा %2$d आते हैं। इसे छोटा करके फिर कोशिश करें।</item>
     </plurals>
+
+    <string name="type_payment">भुगतान</string>
+    <string name="privacy_notice">ऑफ़लाइन काम करता है — आप जो भी स्कैन करते हैं, वह कभी अपलोड नहीं होता।</string>
+    <string name="privacy_notice_dismiss">बंद करें</string>
+    <string name="error_image_unreadable">यह इमेज पढ़ी नहीं जा सकी</string>
+    <string name="history_deleted">स्कैन मिटाया गया</string>
+    <string name="history_undo">पहले जैसा करें</string>
+    <string name="history_pin">पिन करें</string>
+    <string name="history_unpin">पिन हटाएँ</string>
+
+    <string name="link_destination">यहाँ ले जाता है</string>
+    <string name="link_open_anyway">फिर भी खोलें</string>
+    <string name="link_copy">लिंक कॉपी करें</string>
+    <string name="link_checked_offline">इसी फ़ोन पर जाँचा गया। कुछ भी अपलोड नहीं हुआ।</string>
+    <string name="link_flag_userinfo">“@” से पहले का हिस्सा सिर्फ़ दिखावा है — यह लिंक असल में ⁨%1$s⁩ पर जाता है</string>
+    <string name="link_flag_mixed_script">पता किसी और जैसा दिखे, इसलिए अलग-अलग लिपियाँ मिलाई गई हैं</string>
+    <string name="link_flag_lookalike">⁨%1$s⁩ की नकल करता है — यह कोई दूसरी साइट है</string>
+    <string name="link_flag_brand_in_subdomain">⁨%1$s⁩ को किसी दूसरी साइट के पते के आगे लगाता है</string>
+    <string name="link_flag_brand_name">⁨%1$s⁩ का नाम ऐसी साइट पर इस्तेमाल करता है जो उनकी नहीं है</string>
+    <string name="link_flag_public_ip">किसी नाम वाली साइट की जगह सीधे एक इंटरनेट पते (IP) पर जाता है</string>
+    <string name="link_flag_local_ip">आपके लोकल नेटवर्क के किसी डिवाइस पर जाता है</string>
+    <string name="link_flag_confusable_script">ऐसे अक्षरों में लिखा है जो सिर्फ़ लैटिन जैसे दिखते हैं</string>
+    <string name="link_flag_insecure">एन्क्रिप्टेड नहीं — नेटवर्क पर मौजूद दूसरे लोग इसे पढ़ या बदल सकते हैं</string>
+    <string name="link_flag_non_standard_port">एक असामान्य पोर्ट इस्तेमाल करता है</string>
+    <string name="link_flag_shortener">शॉर्ट लिंक — असली पता खोलने तक छिपा रहता है</string>
+
+    <string name="action_pay">UPI ऐप से भुगतान करें</string>
+    <string name="payment_warning">QR कोड स्कैन करने से सिर्फ़ पैसे भेजे जाते हैं — कभी मिलते नहीं।</string>
+    <string name="payment_payee_name">कोड में दिया नाम (सत्यापित नहीं)</string>
+    <string name="payment_payee_address">UPI आईडी</string>
+    <string name="payment_amount">राशि</string>
+    <string name="payment_note">नोट</string>
+    <string name="payment_flag_missing_payee">इस कोड में भुगतान पाने वाले का नाम नहीं है</string>
+    <string name="payment_flag_malformed_payee">इस कोड में दी गई UPI आईडी मान्य नहीं है</string>
+    <string name="payment_flag_malformed_amount">इस कोड में दी गई राशि मान्य नहीं है</string>
+    <string name="payment_flag_amount_prefilled">राशि पहले से भरी हुई है — मंज़ूरी देने से पहले जाँच लें</string>
+    <string name="payment_flag_recurring">एक बार नहीं, बार-बार होने वाले भुगतान सेट करता है</string>
 </resources>

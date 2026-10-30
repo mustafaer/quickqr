@@ -15,12 +15,18 @@ import net.mustafaer.quickqr.data.ScanEntity
  */
 object HistoryFilter {
 
-    fun apply(scans: List<ScanEntity>, query: String): List<ScanEntity> {
+    fun apply(scans: List<ScanEntity>, query: String): List<ScanEntity> =
+        filter(scans, query) { listOf(it.text, it.type) }
+
+    /**
+     * Keeps the items where any of [fields] contains the trimmed [query],
+     * ignoring case. The history screen also matches on each row's derived title.
+     */
+    fun <T> filter(items: List<T>, query: String, fields: (T) -> List<String?>): List<T> {
         val needle = query.trim()
-        if (needle.isEmpty()) return scans
-        return scans.filter { scan ->
-            scan.text.contains(needle, ignoreCase = true) ||
-                scan.type.contains(needle, ignoreCase = true)
+        if (needle.isEmpty()) return items
+        return items.filter { item ->
+            fields(item).any { it?.contains(needle, ignoreCase = true) == true }
         }
     }
 }

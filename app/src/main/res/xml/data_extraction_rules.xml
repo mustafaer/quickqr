@@ -2,15 +2,19 @@
 <!--
    Data extraction rules for Android 12+ (API 31+).
 
-   Settings live in Preferences DataStore (files/datastore/), the scan history
-   lives in the Room database, and AppCompat keeps the per-app language in
-   SharedPreferences below API 33. All three are restored on a new device.
+   Settings live in Preferences DataStore (files/datastore/) and AppCompat keeps
+   the per-app language in SharedPreferences below API 33; both go to cloud
+   backup and device transfer.
+
+   The scan history does not go to the cloud. It holds whatever people scanned,
+   Wi-Fi passwords included, and QuickQR promises that nothing leaves the phone.
+   It still moves in a direct device-to-device transfer, which the user starts
+   and which never touches a server.
 -->
 <data-extraction-rules>
     <cloud-backup>
         <include domain="file" path="datastore" />
         <include domain="sharedpref" path="." />
-        <include domain="database" path="quickqr_database" />
     </cloud-backup>
     <device-transfer>
         <include domain="file" path="datastore" />

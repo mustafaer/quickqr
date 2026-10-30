@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-   Full backup content rules for pre-Android 12 (API < 31).
+   Full backup content rules for pre-Android 12 (API < 31). This format cannot
+   tell a cloud backup from a device-to-device transfer, so settings are the only
+   thing it backs up. The scan history, Wi-Fi passwords included, stays on the
+   phone; see data_extraction_rules.xml for Android 12 and later.
 
-   Settings live in Preferences DataStore, which writes to files/datastore/ —
-   not to SharedPreferences. The sharedpref domain is still included because
-   AppCompat stores the per-app language there below API 33.
-
-   Listing <include> elements is itself the exclusion: anything not named here
-   is left out of the backup.
+   Settings live in Preferences DataStore (files/datastore/). The sharedpref
+   domain is included because AppCompat stores the per-app language there below
+   API 33. Listing <include> elements is itself the exclusion: anything not named
+   here is left out.
 -->
 <full-backup-content>
     <include domain="file" path="datastore" />
     <include domain="sharedpref" path="." />
-    <include domain="database" path="quickqr_database" />
 </full-backup-content>

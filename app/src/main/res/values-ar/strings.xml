@@ -70,7 +70,6 @@
 
     <!-- الإنشاء -->
     <string name="generator_title">إنشاء رمز QR</string>
-    <string name="generator_generate">إنشاء</string>
     <string name="generator_clear">تفريغ النموذج</string>
     <string name="generator_clear_field">مسح</string>
     <string name="generator_save">حفظ</string>
@@ -120,15 +119,6 @@
     <string name="settings_open_website">فتح الموقع</string>
 
     <!-- التعريف بالتطبيق -->
-    <string name="onboarding_slide1_title">سريع وخاص</string>
-    <string name="onboarding_slide1_text">يستخدم QuickQR الكاميرا للمسح فقط. لا تغادر أي بيانات جهازك.</string>
-    <string name="onboarding_slide2_title">يعرف ما الذي قرأه</string>
-    <string name="onboarding_slide2_text">الروابط وشبكات Wi-Fi وجهات الاتصال والبريد الإلكتروني — يتعرّف عليها تلقائيًا وتصبح جاهزة للاستخدام.</string>
-    <string name="onboarding_slide3_title">جاهز للمسح</string>
-    <string name="onboarding_slide3_text">وجّه الكاميرا نحو أي رمز QR للبدء.</string>
-    <string name="onboarding_next">التالي</string>
-    <string name="onboarding_start">لنبدأ</string>
-    <string name="onboarding_skip">تخطٍّ</string>
 
     <!-- تفاصيل جهة الاتصال والحدث -->
     <string name="vcard_organization">المؤسسة</string>
@@ -160,4 +150,41 @@
         <item quantity="many">حجم المحتوى %1$d بايتًا — ولا يتّسع رمز QR لأكثر من %2$d. اختصره ثم أعد المحاولة.</item>
         <item quantity="other">حجم المحتوى %1$d بايت — ولا يتّسع رمز QR لأكثر من %2$d. اختصره ثم أعد المحاولة.</item>
     </plurals>
+
+    <string name="type_payment">دفع</string>
+    <string name="privacy_notice">يعمل دون اتصال — لا يُرفع أي شيء تمسحه.</string>
+    <string name="privacy_notice_dismiss">إغلاق</string>
+    <string name="error_image_unreadable">تعذّرت قراءة هذه الصورة</string>
+    <string name="history_deleted">تم حذف العملية</string>
+    <string name="history_undo">تراجع</string>
+    <string name="history_pin">تثبيت</string>
+    <string name="history_unpin">إلغاء التثبيت</string>
+
+    <string name="link_destination">يؤدي إلى</string>
+    <string name="link_open_anyway">افتح على أي حال</string>
+    <string name="link_copy">نسخ الرابط</string>
+    <string name="link_checked_offline">تم الفحص على هذا الهاتف. لم يُرفع أي شيء.</string>
+    <string name="link_flag_userinfo">النص قبل «@» للتمويه فقط — هذا الرابط يؤدي فعليًا إلى ⁨%1$s⁩</string>
+    <string name="link_flag_mixed_script">يخلط حروفًا من أبجديات مختلفة ليبدو كعنوان آخر</string>
+    <string name="link_flag_lookalike">ينتحل ⁨%1$s⁩ — هذا موقع مختلف</string>
+    <string name="link_flag_brand_in_subdomain">يضع ⁨%1$s⁩ أمام عنوان موقع آخر</string>
+    <string name="link_flag_brand_name">يستخدم اسم ⁨%1$s⁩ على موقع لا يتبع له</string>
+    <string name="link_flag_public_ip">يؤدي إلى عنوان إنترنت رقمي بدلًا من موقع له اسم</string>
+    <string name="link_flag_local_ip">يؤدي إلى جهاز على شبكتك المحلية</string>
+    <string name="link_flag_confusable_script">مكتوب بحروف تبدو لاتينية فقط</string>
+    <string name="link_flag_insecure">غير مشفّر — يمكن لغيرك على الشبكة قراءته أو تغييره</string>
+    <string name="link_flag_non_standard_port">يستخدم منفذًا غير معتاد</string>
+    <string name="link_flag_shortener">رابط مختصر — الوجهة الحقيقية مخفية حتى تفتحه</string>
+
+    <string name="action_pay">ادفع بتطبيق UPI</string>
+    <string name="payment_warning">مسح رمز QR يرسل المال فقط — ولا يمكنك استلام المال بهذه الطريقة.</string>
+    <string name="payment_payee_name">الاسم في الرمز (غير موثّق)</string>
+    <string name="payment_payee_address">معرّف UPI</string>
+    <string name="payment_amount">المبلغ</string>
+    <string name="payment_note">ملاحظة</string>
+    <string name="payment_flag_missing_payee">لا يحدد هذا الرمز أي مستفيد</string>
+    <string name="payment_flag_malformed_payee">معرّف UPI في هذا الرمز غير صالح</string>
+    <string name="payment_flag_malformed_amount">المبلغ في هذا الرمز غير صالح</string>
+    <string name="payment_flag_amount_prefilled">المبلغ مُدخل مسبقًا — تحقق منه قبل الموافقة</string>
+    <string name="payment_flag_recurring">يُعدّ دفعات متكررة وليس دفعة واحدة</string>
 </resources>

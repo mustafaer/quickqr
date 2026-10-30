@@ -70,7 +70,6 @@
 
     <!-- Oluşturucu -->
     <string name="generator_title">QR kod oluştur</string>
-    <string name="generator_generate">Oluştur</string>
     <string name="generator_clear">Formu temizle</string>
     <string name="generator_clear_field">Temizle</string>
     <string name="generator_save">Kaydet</string>
@@ -120,15 +119,6 @@
     <string name="settings_open_website">Web sitesini aç</string>
 
     <!-- Tanıtım -->
-    <string name="onboarding_slide1_title">Hızlı ve gizli</string>
-    <string name="onboarding_slide1_text">QuickQR kameranızı yalnızca tarama için kullanır. Hiçbir veri cihazınızdan çıkmaz.</string>
-    <string name="onboarding_slide2_title">Ne okuduğunu bilir</string>
-    <string name="onboarding_slide2_text">Bağlantılar, Wi-Fi ağları, kişiler, e-postalar — otomatik tanınır ve hemen kullanıma hazır olur.</string>
-    <string name="onboarding_slide3_title">Taramaya hazır</string>
-    <string name="onboarding_slide3_text">Başlamak için kameranızı herhangi bir QR koda doğrultun.</string>
-    <string name="onboarding_next">İleri</string>
-    <string name="onboarding_start">Başla</string>
-    <string name="onboarding_skip">Atla</string>
 
     <!-- Kişi ve etkinlik ayrıntıları -->
     <string name="vcard_organization">Kurum</string>
@@ -156,4 +146,41 @@
         <item quantity="one">İçerik %1$d bayt — bir QR kodun taşıyabileceği en fazla değer %2$d. Kısaltıp tekrar deneyin.</item>
         <item quantity="other">İçerik %1$d bayt — bir QR kodun taşıyabileceği en fazla değer %2$d. Kısaltıp tekrar deneyin.</item>
     </plurals>
+
+    <string name="type_payment">Ödeme</string>
+    <string name="privacy_notice">Çevrimdışı çalışır — taradığınız hiçbir şey yüklenmez.</string>
+    <string name="privacy_notice_dismiss">Kapat</string>
+    <string name="error_image_unreadable">Bu görsel okunamadı</string>
+    <string name="history_deleted">Tarama silindi</string>
+    <string name="history_undo">Geri al</string>
+    <string name="history_pin">Sabitle</string>
+    <string name="history_unpin">Sabitlemeyi kaldır</string>
+
+    <string name="link_destination">Şuraya gider</string>
+    <string name="link_open_anyway">Yine de aç</string>
+    <string name="link_copy">Bağlantıyı kopyala</string>
+    <string name="link_checked_offline">Bu telefonda kontrol edildi. Hiçbir şey yüklenmedi.</string>
+    <string name="link_flag_userinfo">“@” işaretinden önceki kısım süsten ibaret — bu bağlantı aslında ⁨%1$s⁩ adresine gidiyor</string>
+    <string name="link_flag_mixed_script">Adres başka bir adrese benzesin diye farklı alfabeleri karıştırıyor</string>
+    <string name="link_flag_lookalike">⁨%1$s⁩ adresini taklit ediyor — bu farklı bir site</string>
+    <string name="link_flag_brand_in_subdomain">⁨%1$s⁩ adını başka bir sitenin adresinin önüne koyuyor</string>
+    <string name="link_flag_brand_name">⁨%1$s⁩ adını kendisine ait olmayan bir sitede kullanıyor</string>
+    <string name="link_flag_public_ip">İsimli bir site yerine çıplak bir internet adresine gidiyor</string>
+    <string name="link_flag_local_ip">Yerel ağınızdaki bir cihaza gidiyor</string>
+    <string name="link_flag_confusable_script">Yalnızca Latin harfine benzeyen harflerle yazılmış</string>
+    <string name="link_flag_insecure">Şifrelenmemiş — ağdaki başkaları okuyabilir veya değiştirebilir</string>
+    <string name="link_flag_non_standard_port">Alışılmadık bir port kullanıyor</string>
+    <string name="link_flag_shortener">Kısa bağlantı — gerçek hedef siz açana kadar gizli</string>
+
+    <string name="action_pay">Bir UPI uygulamasıyla öde</string>
+    <string name="payment_warning">QR kod taramak yalnızca para gönderir — asla para almanızı sağlamaz.</string>
+    <string name="payment_payee_name">Koddaki ad (doğrulanmadı)</string>
+    <string name="payment_payee_address">UPI kimliği</string>
+    <string name="payment_amount">Tutar</string>
+    <string name="payment_note">Not</string>
+    <string name="payment_flag_missing_payee">Bu kodda ödeme yapılacak kimse yok</string>
+    <string name="payment_flag_malformed_payee">Bu koddaki UPI kimliği geçersiz</string>
+    <string name="payment_flag_malformed_amount">Bu koddaki tutar geçersiz</string>
+    <string name="payment_flag_amount_prefilled">Tutar sizin yerinize girilmiş — onaylamadan önce kontrol edin</string>
+    <string name="payment_flag_recurring">Tek bir ödeme değil, tekrarlanan ödemeler ayarlıyor</string>
 </resources>

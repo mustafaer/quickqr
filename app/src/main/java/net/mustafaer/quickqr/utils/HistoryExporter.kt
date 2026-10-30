@@ -2,6 +2,11 @@ package net.mustafaer.quickqr.utils
 
 import net.mustafaer.quickqr.data.ScanEntity
 
+enum class ExportFormat(val extension: String, val mimeType: String) {
+    CSV("csv", "text/csv"),
+    JSON("json", "application/json")
+}
+
 /**
  * Turns scan history into CSV and JSON text.
  *

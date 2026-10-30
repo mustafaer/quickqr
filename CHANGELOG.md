@@ -8,6 +8,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 > complete rewrite as a native Kotlin and Jetpack Compose application; entries
 > below that line describe a different codebase.
 
+## [Unreleased]
+
+### Added
+- **Link inspection, on the device.** Every scanned link now leads with its real destination — the registrable domain in bold, any subdomain dimmed — and calls out look-alike domains (`paypa1.com`, Cyrillic `аpple.com`, `pay-pal.com`), a brand's domain placed in front of someone else's (`paypal.com.secure-login.xyz`), `user@host` tricks, bare public IP addresses, unencrypted `http`, unusual ports and short links. Links with a severe finding make Copy the default and Open a deliberate "Open anyway". The check uses a bundled brand list weighted toward Türkiye, Germany, India and the Arabic-speaking countries; nothing is uploaded.
+- **UPI payment codes** (`upi://pay`, `upi://mandate`) are recognised. The sheet shows the payee's UPI ID, the name the code claims, any pre-filled amount, and always the reminder that scanning a QR can only send money — the most common UPI fraud depends on people not knowing that. Codes with no valid payee get no Pay button.
+- **WPA3** networks: `T:SAE` codes, which Android's own "Share Wi-Fi" writes, connect with a WPA3 passphrase, and the generator can create them.
+- **Pinned scans** are kept regardless of the 100-scan history limit (database schema 2, migrated automatically).
+- **Undo** after deleting a scan.
+- **Viewfinder lock-on**: the frame springs onto the code that was read before the result opens, and on each continuous-mode save.
+- ML Kit's **automatic zoom** for codes that are detected but too small to read, plus pinch-to-zoom and tap-to-focus.
+
+### Fixed
+- **Scan history went to Google's cloud backup**, contradicting "History and settings never leave the device" — including every scanned Wi-Fi password. History is now excluded from cloud backup and only moves in a user-started device-to-device transfer.
+- **Wi-Fi passwords were shown in plain text** in the history list, in continuous-mode snackbars and in Android 13+'s clipboard preview. History rows and snackbars now show the network name, copies are marked sensitive, the mask no longer reveals the password's length, and a revealed password blocks screenshots.
+- **WPA3 networks failed to connect**: `T:SAE` was read as WPA2.
+- **E-mail QR codes showed `Hi+there`** in other apps' subject lines. Query values are now percent-encoded per RFC 6068.
+- **The scan region was computed on swapped axes** on portrait phones: ML Kit's upright boxes were compared against the sensor's landscape width and height, rejecting codes low in the frame. Boxes now arrive in preview coordinates and are tested against the drawn viewfinder.
+- **Continuous mode re-fired every two seconds** while a code stayed in view — a new vibration, snackbar and database write each time. A code now fires once when it enters the view and again only after it has left.
+- **The scan-line animation never stopped**, keeping the display at its maximum refresh rate on every tab and while a result was open.
+- **A large gallery photo could crash the app**: it was decoded at full resolution, and the resulting `OutOfMemoryError` was not caught. Pictures are now decoded at no more than 2048 px.
+- **Generated QR codes were blurry** on screen (a 512 px bitmap scaled with filtering) and low-resolution when saved. The preview is drawn as vectors and saved images are rendered at whole pixels per module, around 1500 px.
+- **QR content was capped at 1,273 bytes** and every code was denser than needed, because error correction was always the maximum level.
+- **Debug builds could not share files**, and could not be installed next to the release: the FileProvider authority was hard-coded to the release application ID.
+- **A floating calendar time with a `TZID`** was read as the phone's local time.
+- **Explicit Light or Dark themes recreated the activity on every cold start**; the theme is now applied before the first activity exists.
+- Text fields in the generator no longer route through an asynchronous stream, which could drop characters during fast typing.
+
+### Changed
+- `AppViewModel` is split into one ViewModel per tab with a small manual dependency container, and the scan session is a single state value, so the result sheet can no longer show a new payload with the previous payload's type. The scanner ViewModel is covered by tests with fakes, and the new link inspection, look-alike detection, UPI parsing, encoder and classifier by plain JVM tests — 94 unit tests in all.
+- The camera runs on `LifecycleCameraController` with ML Kit's CameraX analyzer at 720p, restricted to the barcode formats QuickQR can act on.
+- The three-screen onboarding is replaced by a dismissible privacy note on the scanner, so the camera is the first thing a new user sees.
+- The gallery button uses the system photo picker; no storage permission is involved.
+- History rows show what was scanned — the network name, contact, event or site — with a relative time, instead of the raw payload; "BEGIN:VCARD" is gone.
+- Type badges and icons use Material tonal colour pairs that follow dynamic colour and pass WCAG AA in both themes; the old white-on-colour badges measured as low as 2.1:1.
+- The generator previews live as you type; the Generate button is gone.
+- The R8 configuration no longer keeps all of Compose, CameraX and ZXing, so release builds shrink and optimise them. ML Kit keeps its rules: it loads components by reflection, and without them release builds crash on the first scan.
+- The unused `ui-text-google-fonts` dependency is removed.
+
 ## [2.3.0] - 2026-08-25
 
 ### Added

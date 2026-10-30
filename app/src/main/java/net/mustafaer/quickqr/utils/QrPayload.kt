@@ -1,20 +1,28 @@
 package net.mustafaer.quickqr.utils
 
-import java.net.URLEncoder
-
 /** The content types QuickQR can build a QR code for. */
 enum class QrPayloadType {
     TEXT, URL, WIFI, EMAIL, PHONE, SMS
 }
 
-enum class WifiSecurity(val qrValue: String, val label: String) {
-    WPA("WPA", "WPA/WPA2"),
-    WEP("WEP", "WEP"),
-    NONE("nopass", "Open");
+/**
+ * The `T:` values of the Wi-Fi QR format. [SAE] is WPA3-Personal, which Android's
+ * own "Share Wi-Fi" code writes for WPA3 networks; reading it as WPA2 handed the
+ * system a passphrase type the access point refuses.
+ */
+enum class WifiSecurity(val qrValue: String) {
+    WPA("WPA"),
+    SAE("SAE"),
+    WEP("WEP"),
+    NONE("nopass");
 
     companion object {
-        fun fromQrValue(value: String?): WifiSecurity =
-            entries.firstOrNull { it.qrValue.equals(value, ignoreCase = true) } ?: WPA
+        fun fromQrValue(value: String?): WifiSecurity = when (value?.trim()?.uppercase()) {
+            "SAE", "WPA3" -> SAE
+            "WEP" -> WEP
+            "NOPASS", "NONE" -> NONE
+            else -> WPA
+        }
     }
 }
 
@@ -103,12 +111,7 @@ data class QrPayloadDraft(
         }
     }
 
-    private fun encode(value: String): String =
-        try {
-            URLEncoder.encode(value, "UTF-8")
-        } catch (_: Exception) {
-            value
-        }
+    private fun encode(value: String): String = TypeDetector.urlEncode(value)
 
     /**
      * The Wi-Fi QR format separates fields with `;` and `:`, so those characters —

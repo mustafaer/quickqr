@@ -93,8 +93,12 @@ class QrPayloadDraftTest {
         assertTrue(TypeDetector.parseWifi(payload)!!.hidden)
     }
 
+    /**
+     * Regression: `URLEncoder` is a form encoder and wrote spaces as `+`, which
+     * RFC 6068 mail clients show literally — "Hi+there". Spaces are `%20`.
+     */
     @Test
-    fun `email payloads url-encode the subject and body`() {
+    fun `email payloads percent-encode the subject and body`() {
         val payload = QrPayloadDraft(
             type = QrPayloadType.EMAIL,
             emailAddress = "ada@example.com",
@@ -102,8 +106,9 @@ class QrPayloadDraftTest {
             emailBody = "How are you?"
         ).build()
         assertTrue(payload.startsWith("mailto:ada@example.com?"))
-        assertTrue(payload.contains("subject=Hi+there"))
-        assertTrue(payload.contains("body=How+are+you%3F"))
+        assertTrue(payload.contains("subject=Hi%20there"))
+        assertTrue(payload.contains("body=How%20are%20you%3F"))
+        assertFalse(payload.contains('+'))
     }
 
     @Test
@@ -163,5 +168,31 @@ class QrPayloadDraftTest {
                 TypeDetector.detect(draft.build())
             )
         }
+    }
+
+    @Test
+    fun `wpa3 networks are written as SAE, the value Android itself emits`() {
+        val payload = QrPayloadDraft(
+            type = QrPayloadType.WIFI,
+            wifiSsid = "Home",
+            wifiPassword = "s3cret",
+            wifiSecurity = WifiSecurity.SAE
+        ).build()
+        assertEquals("WIFI:T:SAE;S:Home;P:s3cret;;", payload)
+    }
+
+    /**
+     * Regression: `T:SAE` fell back to WPA, so connecting handed a WPA3-only
+     * network a WPA2 passphrase it refuses.
+     */
+    @Test
+    fun `security values are read case-insensitively with common aliases`() {
+        assertEquals(WifiSecurity.SAE, WifiSecurity.fromQrValue("SAE"))
+        assertEquals(WifiSecurity.SAE, WifiSecurity.fromQrValue("wpa3"))
+        assertEquals(WifiSecurity.WPA, WifiSecurity.fromQrValue("WPA"))
+        assertEquals(WifiSecurity.WPA, WifiSecurity.fromQrValue("WPA2"))
+        assertEquals(WifiSecurity.WEP, WifiSecurity.fromQrValue("wep"))
+        assertEquals(WifiSecurity.NONE, WifiSecurity.fromQrValue("nopass"))
+        assertEquals(WifiSecurity.WPA, WifiSecurity.fromQrValue(null))
     }
 }

@@ -70,7 +70,6 @@
 
     <!-- Generator -->
     <string name="generator_title">QR-Code erstellen</string>
-    <string name="generator_generate">Erstellen</string>
     <string name="generator_clear">Formular leeren</string>
     <string name="generator_clear_field">Leeren</string>
     <string name="generator_save">Speichern</string>
@@ -120,15 +119,6 @@
     <string name="settings_open_website">Website öffnen</string>
 
     <!-- Einführung -->
-    <string name="onboarding_slide1_title">Schnell und privat</string>
-    <string name="onboarding_slide1_text">QuickQR nutzt die Kamera ausschließlich zum Scannen. Es verlassen keine Daten das Gerät.</string>
-    <string name="onboarding_slide2_title">Erkennt, was es liest</string>
-    <string name="onboarding_slide2_text">Links, WLAN-Netzwerke, Kontakte, E-Mails — automatisch erkannt und sofort nutzbar.</string>
-    <string name="onboarding_slide3_title">Bereit zum Scannen</string>
-    <string name="onboarding_slide3_text">Die Kamera auf einen beliebigen QR-Code richten und loslegen.</string>
-    <string name="onboarding_next">Weiter</string>
-    <string name="onboarding_start">Loslegen</string>
-    <string name="onboarding_skip">Überspringen</string>
 
     <!-- Kontakt- und Termindetails -->
     <string name="vcard_organization">Organisation</string>
@@ -156,4 +146,41 @@
         <item quantity="one">Der Inhalt hat %1$d Byte — mehr als %2$d fasst ein QR-Code nicht. Bitte kürzen und erneut versuchen.</item>
         <item quantity="other">Der Inhalt hat %1$d Byte — mehr als %2$d fasst ein QR-Code nicht. Bitte kürzen und erneut versuchen.</item>
     </plurals>
+
+    <string name="type_payment">Zahlung</string>
+    <string name="privacy_notice">Funktioniert offline – gescannte Inhalte werden nie hochgeladen.</string>
+    <string name="privacy_notice_dismiss">Schließen</string>
+    <string name="error_image_unreadable">Das Bild konnte nicht gelesen werden</string>
+    <string name="history_deleted">Scan gelöscht</string>
+    <string name="history_undo">Rückgängig</string>
+    <string name="history_pin">Anheften</string>
+    <string name="history_unpin">Loslösen</string>
+
+    <string name="link_destination">Führt zu</string>
+    <string name="link_open_anyway">Trotzdem öffnen</string>
+    <string name="link_copy">Link kopieren</string>
+    <string name="link_checked_offline">Auf diesem Gerät geprüft. Nichts wurde hochgeladen.</string>
+    <string name="link_flag_userinfo">Der Text vor „@“ ist nur Tarnung – der Link führt tatsächlich zu ⁨%1$s⁩</string>
+    <string name="link_flag_mixed_script">Mischt Alphabete, damit die Adresse wie eine andere aussieht</string>
+    <string name="link_flag_lookalike">Imitiert ⁨%1$s⁩ – das ist eine andere Website</string>
+    <string name="link_flag_brand_in_subdomain">Setzt ⁨%1$s⁩ vor die Adresse einer anderen Website</string>
+    <string name="link_flag_brand_name">Verwendet den Namen von ⁨%1$s⁩ auf einer fremden Website</string>
+    <string name="link_flag_public_ip">Führt zu einer reinen IP-Adresse statt zu einer benannten Website</string>
+    <string name="link_flag_local_ip">Führt zu einem Gerät im lokalen Netzwerk</string>
+    <string name="link_flag_confusable_script">In Buchstaben geschrieben, die nur lateinisch aussehen</string>
+    <string name="link_flag_insecure">Unverschlüsselt – andere im Netzwerk können mitlesen oder Inhalte ändern</string>
+    <string name="link_flag_non_standard_port">Verwendet einen ungewöhnlichen Port</string>
+    <string name="link_flag_shortener">Kurzlink – das eigentliche Ziel bleibt bis zum Öffnen verborgen</string>
+
+    <string name="action_pay">Mit einer UPI-App bezahlen</string>
+    <string name="payment_warning">Mit einem QR-Code kann nur Geld gesendet werden – nie empfangen.</string>
+    <string name="payment_payee_name">Name im Code (nicht geprüft)</string>
+    <string name="payment_payee_address">UPI-ID</string>
+    <string name="payment_amount">Betrag</string>
+    <string name="payment_note">Notiz</string>
+    <string name="payment_flag_missing_payee">Dieser Code nennt keinen Zahlungsempfänger</string>
+    <string name="payment_flag_malformed_payee">Die UPI-ID in diesem Code ist ungültig</string>
+    <string name="payment_flag_malformed_amount">Der Betrag in diesem Code ist ungültig</string>
+    <string name="payment_flag_amount_prefilled">Der Betrag ist vorausgefüllt – vor dem Bestätigen prüfen</string>
+    <string name="payment_flag_recurring">Richtet wiederkehrende Zahlungen ein, keine Einzelzahlung</string>
 </resources>
