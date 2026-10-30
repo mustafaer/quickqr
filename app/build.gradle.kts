@@ -55,9 +55,9 @@ android {
         unitTests {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
-            // Pinned so date parsing behaves identically on a developer machine
-            // and on CI. A local UTC+3 clock once hid a real timezone bug that
-            // only failed on the UTC runner.
+            // Pinned so date parsing behaves identically on every machine. A
+            // local UTC+3 clock once hid a real timezone bug that only failed on
+            // a machine running in UTC.
             all { test -> test.systemProperty("user.timezone", "UTC") }
         }
     }

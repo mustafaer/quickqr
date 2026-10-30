@@ -67,7 +67,6 @@ build script, so no keystore or credentials live in this repository.
 
 ```text
 quickqr/
-├── .github/workflows/ci.yml      # Unit tests, lint, unsigned release build
 ├── app/
 │   ├── proguard-rules.pro
 │   ├── build.gradle.kts

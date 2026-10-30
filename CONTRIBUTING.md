@@ -39,9 +39,9 @@ Jetpack Compose — there is no Node, npm or web toolchain involved.
 ```
 
 `lint` is configured with `abortOnError = true`, so a lint error fails the build.
-The same three commands run in CI on every pull request, plus an unsigned
-`assembleRelease` to catch R8 and resource-shrinking problems that a debug build
-never surfaces.
+There is no CI, so run all three before opening a pull request, plus
+`./gradlew assembleRelease`: it catches R8 and resource-shrinking problems that a
+debug build never surfaces.
 
 ## Project layout
 

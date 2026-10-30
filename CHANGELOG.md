@@ -46,6 +46,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - The R8 configuration no longer keeps all of Compose, CameraX and ZXing, so release builds shrink and optimise them. ML Kit keeps its rules: it loads components by reflection, and without them release builds crash on the first scan.
 - The unused `ui-text-google-fonts` dependency is removed.
 
+### Removed
+- The GitHub Actions workflow. Unit tests, lint and the unsigned release build are run locally before each release.
+
 ## [2.3.0] - 2026-08-25
 
 ### Added
