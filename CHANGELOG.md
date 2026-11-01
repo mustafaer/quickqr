@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - ML Kit's **automatic zoom** for codes that are detected but too small to read, plus pinch-to-zoom and tap-to-focus.
 
 ### Fixed
+- **ML Kit could send usage data to Google**, contradicting the README's "no `INTERNET` permission". The barcode library merges that permission into the app to upload metrics such as device model, app version and performance figures to `firebaselogging.googleapis.com`. The permission is now removed in the manifest. The upload attempts fail on the device and are caught by ML Kit itself; scanning, which never needed the network, is unaffected.
 - **Scan history went to Google's cloud backup**, contradicting "History and settings never leave the device" — including every scanned Wi-Fi password. History is now excluded from cloud backup and only moves in a user-started device-to-device transfer.
 - **Wi-Fi passwords were shown in plain text** in the history list, in continuous-mode snackbars and in Android 13+'s clipboard preview. History rows and snackbars now show the network name, copies are marked sensitive, the mask no longer reveals the password's length, and a revealed password blocks screenshots.
 - **WPA3 networks failed to connect**: `T:SAE` was read as WPA2.

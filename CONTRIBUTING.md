@@ -10,7 +10,7 @@ Jetpack Compose — there is no Node, npm or web toolchain involved.
    git clone https://github.com/<your-username>/quickqr.git
    cd quickqr
    ```
-2. **Open the project** in Android Studio (Koala/Ladybug or newer). Android Studio
+2. **Open the project** in a recent Android Studio (see Requirements). Android Studio
    downloads the Gradle distribution and the Android SDK components on first sync;
    no manual dependency install step is needed.
 3. **Create a branch:**
@@ -20,7 +20,7 @@ Jetpack Compose — there is no Node, npm or web toolchain involved.
 
 ### Requirements
 
-- Android Studio Koala/Ladybug or newer
+- A recent Android Studio — the project uses Android Gradle Plugin 9.2 and is developed on Android Studio 2026.2
 - JDK 21 (the Gradle daemon toolchain is pinned to 21)
 - Android SDK 36
 

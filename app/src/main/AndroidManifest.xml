@@ -7,6 +7,18 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!--
+        QuickQR never uses the network. ML Kit's bundled barcode model works
+        offline, but the library merges in INTERNET so it can upload usage
+        metrics to Google; removing it keeps those metrics on the device.
+        ACCESS_NETWORK_STATE stays: ML Kit's uploader schedules a job with a
+        network constraint, which Android 14+ refuses without it, and it can
+        only read whether a network is up.
+    -->
+    <uses-permission
+        android:name="android.permission.INTERNET"
+        tools:node="remove" />
+
     <!-- Declare camera as required hardware feature for Google Play filtering -->
     <uses-feature
         android:name="android.hardware.camera"
