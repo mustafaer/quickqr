@@ -1,0 +1,9 @@
+Links are checked before you open them: QuickQR shows where a link really goes and warns about fake look-alike sites.
+
+UPI payment codes show who you are paying and how much.
+
+Join and create WPA3 Wi-Fi codes. Pin important scans, and undo a delete.
+
+The scanner zooms in on small codes by itself, and saved QR codes are sharper.
+
+More private: no internet access at all, history stays out of cloud backups, and Wi-Fi passwords stay hidden.

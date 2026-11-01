@@ -1,0 +1,9 @@
+Bağlantılar açılmadan önce kontrol ediliyor: QuickQR bağlantının gerçekte nereye gittiğini gösteriyor ve taklit sitelere karşı uyarıyor.
+
+UPI ödeme kodları kime ve ne kadar ödediğinizi gösteriyor.
+
+WPA3 Wi-Fi karekodlarıyla bağlanın ve yenilerini oluşturun. Önemli taramaları sabitleyin, silmeyi geri alın.
+
+Tarayıcı küçük kodlara kendiliğinden yakınlaşıyor; kaydedilen karekodlar daha net.
+
+Daha gizli: internet erişimi hiç yok, geçmiş bulut yedeğine girmiyor, Wi-Fi parolaları gizli kalıyor.

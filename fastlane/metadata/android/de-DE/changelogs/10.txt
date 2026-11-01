@@ -1,0 +1,9 @@
+Links werden vor dem Öffnen geprüft: QuickQR zeigt, wohin ein Link wirklich führt, und warnt vor gefälschten Doppelgänger-Seiten.
+
+UPI-Zahlungscodes zeigen, an wen und wie viel Sie zahlen.
+
+WPA3-WLAN-Codes verbinden und erstellen. Wichtige Scans anheften, Löschen rückgängig machen.
+
+Der Scanner zoomt kleine Codes selbst heran, gespeicherte QR-Codes sind schärfer.
+
+Mehr Privatsphäre: kein Internetzugriff, der Verlauf bleibt aus Cloud-Backups heraus, WLAN-Passwörter bleiben verborgen.

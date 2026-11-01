@@ -154,7 +154,7 @@ constructors, so they are tested the same way with fakes.
 
 ## 🗺️ Project status
 
-`development` is the default branch and holds the next release. Its new features:
+`development` is the default branch. It holds 2.4.0, the next Play release, which adds:
 
 - on-device link inspection
 - UPI payments
@@ -163,7 +163,7 @@ constructors, so they are tested the same way with fakes.
 - a rebuilt scanner
 - no `INTERNET` permission
 
-They're listed under *Unreleased* in [CHANGELOG.md](CHANGELOG.md), which has the full version history.
+[CHANGELOG.md](CHANGELOG.md) has the details and the full version history.
 
 ### Known limitations
 

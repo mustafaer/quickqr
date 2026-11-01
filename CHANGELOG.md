@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-01
+
 ### Added
 - **Link inspection, on the device.** Every scanned link now leads with its real destination — the registrable domain in bold, any subdomain dimmed — and calls out look-alike domains (`paypa1.com`, Cyrillic `аpple.com`, `pay-pal.com`), a brand's domain placed in front of someone else's (`paypal.com.secure-login.xyz`), `user@host` tricks, bare public IP addresses, unencrypted `http`, unusual ports and short links. Links with a severe finding make Copy the default and Open a deliberate "Open anyway". The check uses a bundled brand list weighted toward Türkiye, Germany, India and the Arabic-speaking countries; nothing is uploaded.
 - **UPI payment codes** (`upi://pay`, `upi://mandate`) are recognised. The sheet shows the payee's UPI ID, the name the code claims, any pre-filled amount, and always the reminder that scanning a QR can only send money — the most common UPI fraud depends on people not knowing that. Codes with no valid payee get no Pay button.
