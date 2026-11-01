@@ -17,11 +17,16 @@
 -renamesourcefileattribute SourceFile
 
 # ---- ML Kit -----------------------------------------------------------------
-# ML Kit discovers its components by reflection, from class names in manifest
-# metadata that R8 cannot see. Without these rules BarcodeScanning.getClient()
-# throws a NullPointerException in release builds only — debug builds, which are
-# not minified, work fine, so this is easy to break without noticing.
--keep class com.google.mlkit.** { *; }
--dontwarn com.google.mlkit.**
--keep class com.google.android.gms.internal.mlkit_vision_barcode.** { *; }
--dontwarn com.google.android.gms.internal.mlkit_vision_barcode.**
+# ML Kit finds its components through registrar classes named in manifest
+# metadata and creates them by reflection. firebase-components ships
+# `-keep class * implements ComponentRegistrar`, but in R8 full mode keeping a
+# class does not keep its constructor, so the registrars cannot be created and
+# BarcodeScanning.getClient() throws a NullPointerException — in release builds
+# only, which makes it easy to break without noticing. Keeping the constructors
+# is all ML Kit needs; its own rules cover its JNI and protobuf classes.
+#
+# This replaced package-wide keeps of com.google.mlkit.** and the ML Kit
+# internals, which left about 13% of the app's code unoptimised and readable.
+-keep class * implements com.google.firebase.components.ComponentRegistrar {
+    <init>();
+}

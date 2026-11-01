@@ -44,7 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - History rows show what was scanned — the network name, contact, event or site — with a relative time, instead of the raw payload; "BEGIN:VCARD" is gone.
 - Type badges and icons use Material tonal colour pairs that follow dynamic colour and pass WCAG AA in both themes; the old white-on-colour badges measured as low as 2.1:1.
 - The generator previews live as you type; the Generate button is gone.
-- The R8 configuration no longer keeps all of Compose, CameraX and ZXing, so release builds shrink and optimise them. ML Kit keeps its rules: it loads components by reflection, and without them release builds crash on the first scan.
+- The R8 configuration no longer keeps all of Compose, CameraX, ZXing and ML Kit, so release builds shrink, optimise and obfuscate them. A single narrow rule keeps the constructors of ML Kit's component registrars: R8 full mode removes them otherwise, and the first scan crashes. Play Console's DEX optimisation figures rise from 48% to about 95–96% for optimisation, obfuscation and shrinking, and the app's code (DEX) shrinks from 9.4 MB to 4.9 MB.
 - The unused `ui-text-google-fonts` dependency is removed.
 
 ### Removed

@@ -121,7 +121,7 @@ There is no CI. Run the tests, lint and a release build locally before opening a
 ```text
 quickqr/
 ├── app/
-│   ├── proguard-rules.pro        # R8 rules (ML Kit needs its keeps)
+│   ├── proguard-rules.pro        # R8 rules: one narrow keep for ML Kit
 │   ├── build.gradle.kts
 │   ├── schemas/                  # Exported Room schemas, committed for migrations
 │   └── src/
