@@ -64,28 +64,17 @@ data class LinkVerdict(
  */
 object UrlInspector {
 
-    /**
-     * Scripts whose letters pass for Latin ones in most fonts. Grouped by Unicode
-     * block rather than `Character.UnicodeScript`, which needs API 24 — and for
-     * letters in host names the two agree.
-     */
+    /** Scripts whose letters pass for Latin ones in most fonts. */
     private enum class Script(val confusableWithLatin: Boolean) {
         LATIN(false), CYRILLIC(true), GREEK(true), ARMENIAN(true), CHEROKEE(true), OTHER(false)
     }
 
-    private fun scriptOf(codePoint: Int): Script = when (Character.UnicodeBlock.of(codePoint) ?: return Script.OTHER) {
-        Character.UnicodeBlock.BASIC_LATIN,
-        Character.UnicodeBlock.LATIN_1_SUPPLEMENT,
-        Character.UnicodeBlock.LATIN_EXTENDED_A,
-        Character.UnicodeBlock.LATIN_EXTENDED_B,
-        Character.UnicodeBlock.LATIN_EXTENDED_ADDITIONAL,
-        Character.UnicodeBlock.IPA_EXTENSIONS -> Script.LATIN
-        Character.UnicodeBlock.CYRILLIC,
-        Character.UnicodeBlock.CYRILLIC_SUPPLEMENTARY -> Script.CYRILLIC
-        Character.UnicodeBlock.GREEK,
-        Character.UnicodeBlock.GREEK_EXTENDED -> Script.GREEK
-        Character.UnicodeBlock.ARMENIAN -> Script.ARMENIAN
-        Character.UnicodeBlock.CHEROKEE -> Script.CHEROKEE
+    private fun scriptOf(codePoint: Int): Script = when (Character.UnicodeScript.of(codePoint)) {
+        Character.UnicodeScript.LATIN -> Script.LATIN
+        Character.UnicodeScript.CYRILLIC -> Script.CYRILLIC
+        Character.UnicodeScript.GREEK -> Script.GREEK
+        Character.UnicodeScript.ARMENIAN -> Script.ARMENIAN
+        Character.UnicodeScript.CHEROKEE -> Script.CHEROKEE
         else -> Script.OTHER
     }
 

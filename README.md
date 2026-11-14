@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://play.google.com/store/apps/details?id=net.mustafaer.quickqr"><img src="https://img.shields.io/badge/Google%20Play-Download-brightgreen?style=flat-square&logo=google-play" alt="Google Play" /></a>
-  <img src="https://img.shields.io/badge/Android-6.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 6.0+" />
+  <img src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 7.0+" />
   <a href="LICENSE"><img src="https://img.shields.io/github/license/mustafaer/quickqr?style=flat-square" alt="License" /></a>
   <a href="https://github.com/mustafaer/quickqr/commits/development"><img src="https://img.shields.io/github/last-commit/mustafaer/quickqr/development?style=flat-square" alt="Last commit" /></a>
 </p>
@@ -73,7 +73,7 @@ QuickQR is on [Google Play](https://play.google.com/store/apps/details?id=net.mu
 | **Architecture** | One ViewModel per tab, manual dependency injection |
 | **Tests** | JUnit 4 and kotlinx-coroutines-test: 94 JVM unit tests |
 | **Build** | Gradle 9.5 Kotlin DSL with a version catalog, Android Gradle Plugin 9.2, R8 in release builds |
-| **Platform** | Android 6.0+ (minSdk 23), targetSdk 36, compileSdk 36 |
+| **Platform** | Android 7.0+ (minSdk 24), targetSdk 36, compileSdk 36 |
 
 ## 🚀 Getting started
 

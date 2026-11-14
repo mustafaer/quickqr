@@ -678,7 +678,7 @@ private fun addEventIntent(event: EventData, fallbackTitle: String): Intent =
  */
 private fun copyToClipboard(context: Context, value: String, sensitive: Boolean) {
     val clip = ClipData.newPlainText("QuickQR", value)
-    if (sensitive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+    if (sensitive) {
         clip.description.extras = PersistableBundle().apply {
             putBoolean("android.content.extra.IS_SENSITIVE", true)
         }

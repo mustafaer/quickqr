@@ -2,7 +2,6 @@ package net.mustafaer.quickqr.ui.components
 
 import android.icu.text.RelativeDateTimeFormatter
 import android.icu.util.ULocale
-import android.os.Build
 import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -15,23 +14,15 @@ import java.util.Locale
 /**
  * "5 min. ago", "yesterday", then a plain date — in the app's language, read
  * from the Compose configuration because the activity is not recreated on a
- * language change. Below Android 7 there is no ICU formatter, so the date is
- * always absolute there.
+ * language change.
  */
 class RelativeTimeFormatter(locale: Locale) {
 
     private val absolute = SimpleDateFormat(DateFormat.getBestDateTimePattern(locale, "dMMMyyyy"), locale)
 
-    private val relative: RelativeDateTimeFormatter? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            RelativeDateTimeFormatter.getInstance(ULocale.forLocale(locale))
-        } else {
-            null
-        }
+    private val formatter = RelativeDateTimeFormatter.getInstance(ULocale.forLocale(locale))
 
     fun format(then: Long, now: Long): String {
-        val formatter = relative ?: return absolute.format(Date(then))
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return absolute.format(Date(then))
         val minutes = ((now - then).coerceAtLeast(0) / 60_000L).toDouble()
         return when {
             minutes < 1 -> formatter.format(RelativeDateTimeFormatter.Direction.PLAIN, RelativeDateTimeFormatter.AbsoluteUnit.NOW)

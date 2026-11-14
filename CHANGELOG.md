@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Text fields in the generator no longer route through an asynchronous stream, which could drop characters during fast typing.
 
 ### Changed
+- **Android 7.0 (API 24) is now the minimum**, as Google Play's automatic protection requires. Android 6.0 devices keep 2.3.0. Look-alike detection now groups letters by Unicode script instead of by Unicode block, which the old minimum ruled out, so it also catches lookalike letters from the rarer Cyrillic, Greek and Latin extension blocks.
 - `AppViewModel` is split into one ViewModel per tab with a small manual dependency container, and the scan session is a single state value, so the result sheet can no longer show a new payload with the previous payload's type. The scanner ViewModel is covered by tests with fakes, and the new link inspection, look-alike detection, UPI parsing, encoder and classifier by plain JVM tests — 94 unit tests in all.
 - The camera runs on `LifecycleCameraController` with ML Kit's CameraX analyzer at 720p, restricted to the barcode formats QuickQR can act on.
 - The three-screen onboarding is replaced by a dismissible privacy note on the scanner, so the camera is the first thing a new user sees.

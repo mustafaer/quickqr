@@ -12,9 +12,9 @@ android {
 
     defaultConfig {
         applicationId = "net.mustafaer.quickqr"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 36
-        versionCode = 10
+        versionCode = 11
         versionName = "2.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
